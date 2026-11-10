@@ -49,6 +49,12 @@ typedef struct
     };
 } vec4;
 
+typedef struct
+{
+    vec4 coord;
+    vec2 uv;
+    vec3 normals;
+} VERT;
 
 template <int N>
 struct matn {
@@ -71,6 +77,14 @@ static inline vec3 cross(vec3 v1, vec3 v2) {
     res.x = v1.y * v2.z - v2.y * v1.z;
     res.y = v2.x * v1.z - v1.x * v2.z;
     res.z = v1.x * v2.y - v2.x * v1.y;
+    return res;
+}
+
+static inline float dot(vec2 v1, vec2 v2) {
+    float res{};
+    for (int i = 0; i < 2; i++) {
+        res += v1.M[i] * v2.M[i];
+    }
     return res;
 }
 

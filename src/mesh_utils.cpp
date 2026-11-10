@@ -1,4 +1,9 @@
 #include "mesh_utils.h"
+#include "image_utils.h"
+#include "texturing.h"
+#include "mat.h"
+
+#include <algorithm>
 
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
 #include "external/tinyobj_loader_c.h"
@@ -226,4 +231,124 @@ mesh load_obj(const char *filename)
     tinyobj_shapes_free(shapes, num_shapes);
     tinyobj_materials_free(materials, num_materials);
     return m;
+}
+
+void make_background(std::vector<object> &background, float S)
+{
+    vec3 corner[8];
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            for (int k = 0; k < 2; k++) {
+                int v = i * 4 + j * 2 + k;
+                corner[v] = make3(-S + 2.0f * S * i, -S + 2.0f * S * j, -S + 2.0f * S * k);
+            }
+        }
+    }
+    static const int face_idx[6][4] = {
+        {1,5,7,3},
+        {0,2,6,4},
+        {4,6,7,5},
+        {0,1,3,2},
+        {2,3,7,6},
+        {0,4,5,1},
+    };
+    static const float face_uv[6][4][2] = {
+        { {1,0}, {0,0}, {0,1}, {1,1} },
+        { {0,0}, {0,1}, {1,1}, {1,0} },
+        { {0,0}, {0,1}, {1,1}, {1,0} },
+        { {1,0}, {0,0}, {0,1}, {1,1} },
+        { {0,0}, {0,1}, {1,1}, {1,0} },
+        { {0,1}, {1,1}, {1,0}, {0,0} },
+    };
+    static const int face_nrm[6][3] = {
+        {0,0,-1}, {0,0,1}, {-1,0,0}, {1,0,0}, {0,-1,0}, {0,1,0}
+    };
+    static const char *names[6] = {"ft", "bk", "rt", "lf", "up", "dn" };
+
+    for (int f = 0; f < 6; f++) {
+        mesh *m = new mesh{};
+        m->num_vertices  = 4;
+        m->num_triangles = 2;
+        m->verts = (vec3 *)malloc(sizeof(vec3) * 4);
+        m->normals = (vec3 *)malloc(sizeof(vec3) * 4);
+        m->tcs = (vec2 *)malloc(sizeof(vec2) * 4);
+        m->indices = (int  *)malloc(sizeof(int)  * 6);
+
+        for (int i = 0; i < 4; i++) {
+            m->verts[i] = corner[face_idx[f][i]];
+            m->normals[i] = make3((float)face_nrm[f][0], (float)face_nrm[f][1], (float)face_nrm[f][2]);
+            m->tcs[i] = make2(face_uv[f][i][0], face_uv[f][i][1]);
+        }
+
+        m->indices[0] = 0; m->indices[1] = 1; m->indices[2] = 2;
+        m->indices[3] = 0; m->indices[4] = 2; m->indices[5] = 3;
+
+        texture *t = new texture();
+        std::string path = std::string("resources/textures/skybox/hills_") + names[f];
+        path += (strcmp(names[f], "up") == 0) ? ".jpg" : ".png";
+
+        int w = 0, h = 0;
+        float *tex = load_image_f32_rgb(path.c_str(), &w, &h, 2.2f);
+        t->copies.push_back(tex);
+        t->cop_w.push_back(w);
+        t->cop_h.push_back(h);
+        background.emplace_back(make_obj(m, make_translate(make3(0, 0, 0)), t, "full"));
+    }
+}
+
+mesh* make_landscape_mesh(int grid, float cell)
+{
+    mesh *m = new mesh{};
+    m->num_vertices = (grid + 1) * (grid + 1);
+    m->num_triangles = grid * grid * 2;
+    m->verts = (vec3 *)malloc(sizeof(vec3) * m->num_vertices);
+    m->normals = (vec3 *)malloc(sizeof(vec3) * m->num_vertices);
+    m->tcs = (vec2 *)malloc(sizeof(vec2) * m->num_vertices);
+    m->indices = (int *)malloc(sizeof(int)  * m->num_triangles * 3);
+    size_t t{};
+    for (int x = 0; x <= grid; x++) {
+        for (int z = 0; z <= grid; z++) {
+            m->verts[z * (grid + 1) + x] = make3((x - grid * 0.5f) * cell, 0.0f, (z - grid * 0.5f) * cell);
+            if (x != grid && z != grid) {
+                int i00 = z * (grid + 1) + x;
+                int i10 = i00 + 1;
+                int i01 = (z + 1) * (grid + 1) + x;
+                int i11 = i01 + 1;
+
+                m->indices[t++] = i00; m->indices[t++] = i01; m->indices[t++] = i11;
+                m->indices[t++] = i00; m->indices[t++] = i11; m->indices[t++] = i10;
+            }
+        }
+    }
+
+    vec3 *acc = (vec3 *)calloc(m->num_vertices, sizeof(vec3));
+    for (int i = 0; i < m->num_triangles; i++) {
+        int i0 = m->indices[3 * i + 0];
+        int i1 = m->indices[3 * i + 1];
+        int i2 = m->indices[3 * i + 2];
+
+        vec3 e1 = sub(m->verts[i1], m->verts[i0]);
+        vec3 e2 = sub(m->verts[i2], m->verts[i0]);
+        vec3 n  = cross(e1, e2);
+
+        acc[i0] = add(acc[i0], n);
+        acc[i1] = add(acc[i1], n);
+        acc[i2] = add(acc[i2], n);
+    }
+    for (int i = 0; i < m->num_vertices; i++) {
+        normalize(acc[i]);
+        m->normals[i] = acc[i];
+    }
+    free(acc);
+
+    return m;
+}
+
+void make_landscape(object &landscape, int grid, float cell) {
+    landscape.m = make_landscape_mesh(grid, cell);
+    landscape.M = mat4();
+    landscape.type = "full";
+    landscape.tex = new texture();
+    const char *tex_path = "resources/textures/Grass_09-256x256.png";
+    create_texture(*landscape.tex, tex_path);
 }

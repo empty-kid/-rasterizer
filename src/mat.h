@@ -1,3 +1,6 @@
+#ifndef MAT_H
+#define MAT_H
+
 #include <vectors.h>
 
 template <int N>
@@ -35,7 +38,7 @@ matn<N> mul(const matn<N> &a, const matn<N> &b) {
     return c;
 }
 
-vec4 mul(const mat4 &a, const vec4 &b) {
+inline vec4 mul(const mat4 &a, const vec4 &b) {
     vec4 c;
     for (int i = 0; i < 4; i++) {
         c.M[i] = 0;
@@ -46,7 +49,7 @@ vec4 mul(const mat4 &a, const vec4 &b) {
     return c;
 }
 
-vec3 mul(const mat3 &a, const vec3 &b) {
+inline vec3 mul(const mat3 &a, const vec3 &b) {
     vec3 c;
     for (int i = 0; i < 3; i++) {
         c.M[i] = 0;
@@ -57,7 +60,7 @@ vec3 mul(const mat3 &a, const vec3 &b) {
     return c;
 }
 
-vec3 add(vec3 &a, vec3 &b) {
+inline vec3 add(vec3 &a, vec3 &b) {
     vec3 c;
     for (int i = 0; i < 3; i++) {
         c.M[i] = a.M[i] + b.M[i];
@@ -65,7 +68,7 @@ vec3 add(vec3 &a, vec3 &b) {
     return c;
 }
 
-vec3 sub(vec3 &a, vec3 &b) {
+inline vec3 sub(vec3 &a, vec3 &b) {
     vec3 c;
     for (int i = 0; i < 3; i++) {
         c.M[i] = a.M[i] - b.M[i];
@@ -117,3 +120,19 @@ bool inverse(matn<N> a, matn<N> &inv) {
     }
     return true;
 }
+
+inline VERT lerp_vertex(const VERT &a, const VERT &b, float t) {
+    VERT res;
+    for (int i = 0; i < 4; i++) {
+        res.coord.M[i] = a.coord.M[i] * (1 - t) + b.coord.M[i] * t;
+    }
+    for (int i = 0; i < 2; i++) {
+        res.uv.M[i] = a.uv.M[i] * (1 - t) + b.uv.M[i] * t;
+    }
+    for (int i = 0; i < 3; i++) {
+        res.normals.M[i] = a.normals.M[i] * (1 - t) + b.normals.M[i] * t;
+    }
+    return res;
+}
+
+#endif

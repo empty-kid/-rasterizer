@@ -1,0 +1,4 @@
+/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/raster_utils.dir
+/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/main_app.dir
+/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/edit_cache.dir
+/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/rebuild_cache.dir

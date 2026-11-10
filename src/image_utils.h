@@ -12,9 +12,12 @@
 // Возвращает ненулевое значение при успехе.
 int save_image_f32_png_rgb(const float *data, const char *filename, int w, int h, int channels, float gamma);
 
+int save_image_f32_png_gray(const float *data, const char *filename, int w, int h, float gamma);
+
 // Загружает 3-канальную (RGB) картинку; к каждому значению из [0, 1] применяется x^gamma
 // (gamma = 1 - без преобразования). Возвращает массив w*h*3 float (освобождать free())
 // или NULL при ошибке.
 float *load_image_f32_rgb(const char *filename, int *w, int *h, float gamma);
+
 
 #endif

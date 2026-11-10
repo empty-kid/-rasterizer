@@ -1,0 +1,2 @@
+/usr/bin/ar qc libraster_utils.a CMakeFiles/raster_utils.dir/src/image_utils.cpp.o CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o CMakeFiles/raster_utils.dir/src/raster.cpp.o CMakeFiles/raster_utils.dir/src/noise.cpp.o CMakeFiles/raster_utils.dir/src/texturing.cpp.o CMakeFiles/raster_utils.dir/src/visualization.cpp.o
+/usr/bin/ranlib libraster_utils.a

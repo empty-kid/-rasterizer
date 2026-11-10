@@ -30,7 +30,11 @@ add_library(raster_utils STATIC
     src/image_utils.cpp
     src/mesh_utils.cpp
     src/raster.cpp
+    src/noise.cpp
+    src/texturing.cpp
+    src/visualization.cpp
 )
+
 target_include_directories(raster_utils PUBLIC src ${CMAKE_CURRENT_SOURCE_DIR})
 if(NOT MSVC)
     target_link_libraries(raster_utils PUBLIC m)
@@ -42,8 +46,8 @@ if(OpenMP_C_FOUND)
 endif()
 
 # --- консольная программа: меш + картинка -> PNG ---------------------------
-add_executable(main_cli src/main_cli.cpp)
-target_link_libraries(main_cli PRIVATE raster_utils)
+# add_executable(main_cli src/main_cli.cpp)
+# target_link_libraries(main_cli PRIVATE raster_utils)
 
 # --- программа с окном (нужен GLFW) ---------------------------------------
 set(OpenGL_GL_PREFERENCE GLVND)

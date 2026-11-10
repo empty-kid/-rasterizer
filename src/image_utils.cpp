@@ -75,6 +75,29 @@ int save_image_f32_png_rgb(const float *data, const char *filename, int w, int h
     return res;
 }
 
+int save_image_f32_png_gray(const float *data, const char *filename, int w, int h, float gamma)
+{
+    const float gammaInv = 1.0f / gamma;
+    unsigned char *data_gray8 = (unsigned char*)malloc((size_t)w * h);
+    if (!data_gray8)
+        return 0;
+
+    for (int i = 0; i < w * h; i++)
+        data_gray8[i] = tonemap(data[i], gammaInv);
+
+    for (int i = 0; i < h / 2; i++) {
+        for (int j = 0; j < w; j++) {
+            unsigned char tmp = data_gray8[i * w + j];
+            data_gray8[i * w + j] = data_gray8[(h - 1 - i) * w + j];
+            data_gray8[(h - 1 - i) * w + j] = tmp;
+        }
+    }
+
+    int res = stbi_write_png(filename, w, h, 1, data_gray8, w);
+    free(data_gray8);
+    return res;
+}
+
 float *load_image_f32_rgb(const char *filename, int *w, int *h, float gamma)
 {
     int channels = 0;
