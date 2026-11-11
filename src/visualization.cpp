@@ -255,3 +255,72 @@ void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector
         }
     }
 }
+
+void paint_background(std::vector<float> &fb, std::vector<float> &sb, const vec3 &eye, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
+{
+    mat4 VP = mul(P, V);
+    mat4 inv_VP;
+    inverse(VP, inv_VP);
+    for (int j = 0; j < H; j++) {
+        for (int i = 0; i < W; i++) {
+            size_t idx = (size_t)j * W + i;
+            if (sb[idx] < 1.0f) {
+                continue;
+            }
+            float x = 2.0f * ((float)i + 0.5f) / (float)W - 1.0f;
+            float y = 2.0f * ((float)j + 0.5f) / (float)H - 1.0f;
+                vec4 p = mul(inv_VP, make4(x, y, 1.0f, 1.0f));
+            vec3 world = make3(p.x / p.w, p.y / p.w, p.z / p.w);
+            vec3 dir = sub(world, eye);
+            normalize(dir);
+
+            float ax = fabsf(dir.x);
+            float ay = fabsf(dir.y);
+            float az = fabsf(dir.z);
+
+            int face;
+            float u, v;
+
+            // Выбираем грань по наибольшей по модулю компоненте
+            if (az >= ax && az >= ay) {
+                if (dir.z > 0.0f) {          // ft (+Z)
+                    face = 0;
+                    u = 0.5f * (1.0f - dir.x / dir.z);
+                    v = 0.5f * (1.0f + dir.y / dir.z);
+                } else {                     // bk (-Z)
+                    face = 1;
+                    u = 0.5f * (1.0f - dir.x / dir.z);
+                    v = 0.5f * (1.0f - dir.y / dir.z);
+                }
+            } else if (ax >= ay) {
+                if (dir.x > 0.0f) {          // rt (+X)
+                    face = 2;
+                    u = 0.5f * (1.0f + dir.z / dir.x);
+                    v = 0.5f * (1.0f + dir.y / dir.x);
+                } else {                     // lf (-X)
+                    face = 3;
+                    u = 0.5f * (1.0f + dir.z / dir.x);
+                    v = 0.5f * (1.0f - dir.y / dir.x);
+                }
+            } else {
+                if (dir.y > 0.0f) {          // up (+Y)
+                    face = 4;
+                    u = 0.5f * (1.0f + dir.x / dir.y);
+                    v = 0.5f * (1.0f - dir.z / dir.y);
+                } else {                     // dn (-Y)
+                    face = 5;
+                    u = 0.5f * (1.0f - dir.x / dir.y);
+                    v = 0.5f * (1.0f + dir.z / dir.y);
+                }
+            }
+
+            const texture *tex = objs[face].tex;
+            vec3 c = interpolate(tex->copies[0], tex->cop_w[0], tex->cop_h[0],
+                                make2(u, 1.0f - v), false);
+
+            fb[idx * 3 + 0] = c.x;
+            fb[idx * 3 + 1] = c.y;
+            fb[idx * 3 + 2] = c.z;
+        }
+    }
+}

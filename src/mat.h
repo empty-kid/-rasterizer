@@ -60,7 +60,7 @@ inline vec3 mul(const mat3 &a, const vec3 &b) {
     return c;
 }
 
-inline vec3 add(vec3 &a, vec3 &b) {
+inline vec3 add(const vec3 &a, const vec3 &b) {
     vec3 c;
     for (int i = 0; i < 3; i++) {
         c.M[i] = a.M[i] + b.M[i];
@@ -68,7 +68,7 @@ inline vec3 add(vec3 &a, vec3 &b) {
     return c;
 }
 
-inline vec3 sub(vec3 &a, vec3 &b) {
+inline vec3 sub(const vec3 &a, const vec3 &b) {
     vec3 c;
     for (int i = 0; i < 3; i++) {
         c.M[i] = a.M[i] - b.M[i];

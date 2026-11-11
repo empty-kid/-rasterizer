@@ -410,7 +410,7 @@ int main(int argc, char **argv)
 
         paint(fb, sb, clip, normals, V, P, l, objs, W, H);
         paint_landscape(fb, sb, clip, normals, base_normals, V, P, l, landscape, additional_landscape_tex, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period_landscape_tex);
-        paint_background(fb, sb, clip, normals, V, P, l, background, W, H);
+        paint_background(fb, sb, eye, V, P, l, background, W, H);
 
         // mat4 VP = mul(P, V);
         // mat4 invVP;
