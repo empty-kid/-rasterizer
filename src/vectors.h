@@ -56,6 +56,14 @@ typedef struct
     vec3 normals;
 } VERT;
 
+typedef struct
+{
+    vec4 coord;
+    vec2 uv;
+    vec3 normals;
+    vec3 base_normals;
+} VERT_L;
+
 template <int N>
 struct matn {
     float mat[N][N] = {};

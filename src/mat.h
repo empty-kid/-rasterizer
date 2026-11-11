@@ -135,4 +135,21 @@ inline VERT lerp_vertex(const VERT &a, const VERT &b, float t) {
     return res;
 }
 
+inline VERT_L lerp_vertex(const VERT_L &a, const VERT_L &b, float t) {
+    VERT_L res;
+    for (int i = 0; i < 4; i++) {
+        res.coord.M[i] = a.coord.M[i] * (1 - t) + b.coord.M[i] * t;
+    }
+    for (int i = 0; i < 2; i++) {
+        res.uv.M[i] = a.uv.M[i] * (1 - t) + b.uv.M[i] * t;
+    }
+    for (int i = 0; i < 3; i++) {
+        res.normals.M[i] = a.normals.M[i] * (1 - t) + b.normals.M[i] * t;
+    }
+    for (int i = 0; i < 3; i++) {
+        res.base_normals.M[i] = a.base_normals.M[i] * (1 - t) + b.base_normals.M[i] * t;
+    }
+    return res;
+}
+
 #endif

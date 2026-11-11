@@ -34,6 +34,7 @@ bool left_mouse_down{};
 bool right_mouse_down{};
 bool mouse_look{};
 std::string TYPE = "full";
+std::string CAM_TYPE = "base";
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -55,6 +56,10 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
         TYPE = "depth";
     } else if (key == GLFW_KEY_5) {
         TYPE = "mip";
+    } else if (key == GLFW_KEY_6) {
+        CAM_TYPE = "height";
+    } else if (key == GLFW_KEY_7) {
+        CAM_TYPE = "base";
     }
 }
 
@@ -145,7 +150,7 @@ static void upscale_bilinear(const std::vector<float> &src, uint8_t *dst, int sr
         float v = (y + 0.5f) / dst_h;
         for (int x = 0; x < dst_w; x++) {
             float u = (x + 0.5f) / dst_w;
-            vec3 c = interpolate(src.data(), src_w, src_h, make2(u, 1.0f - v));
+            vec3 c = interpolate(src.data(), src_w, src_h, make2(u, 1.0f - v), true);
             uint8_t *p = &dst[((size_t)y * dst_w + x) * 4];
             write_rgb(p, c.x, c.y, c.z);
         }
@@ -168,11 +173,12 @@ int main(int argc, char **argv)
     const int hm_height = 512;
     const float features = 5.0f;
     const int octaves = 6;
-    const int grid = 256;
-    const int landscape_size = 100;
+    const int grid = 64;
+    const int landscape_size = 50;
     const float cell = float(landscape_size) / float(grid);
     const float speed = 1.0f;
     const float landscape_base_y = -2.5f;
+    const int period_landscape_tex = 3;
 
 
     std::vector<float> fb((size_t)W * H * 3, 0.0f);
@@ -201,6 +207,9 @@ int main(int argc, char **argv)
     
     object landscape;
     make_landscape(landscape, grid, cell);
+
+    texture additional_landscape_tex;
+    create_texture(additional_landscape_tex, "resources/textures/Grass_11-256x256.png");
 
     
     glfwSetErrorCallback(glfw_error_callback);
@@ -296,6 +305,7 @@ int main(int argc, char **argv)
     
     std::vector<vec4> clip(meshs[0].num_vertices);
     std::vector<vec3> normals(meshs[0].num_vertices);
+    std::vector<vec3> base_normals(landscape.m->num_vertices);
 
     float max_crds[3] = {meshs[0].verts[0].x, meshs[0].verts[0].y, meshs[0].verts[0].z};
     float min_crds[3] = {meshs[0].verts[0].x, meshs[0].verts[0].y, meshs[0].verts[0].z};
@@ -345,7 +355,6 @@ int main(int argc, char **argv)
         normalize(up);
         vec3 right = cross(forward, up);
         normalize(right);
-        vec3 target = make3(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             eye.x += forward.x * speed * dt;
             eye.y += forward.y * speed * dt;
@@ -366,16 +375,23 @@ int main(int argc, char **argv)
             eye.y -= right.y * speed * dt;
             eye.z -= right.z * speed * dt;
         }
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS and CAM_TYPE != "height") {
             eye.x += up.x * speed * dt;
             eye.y += up.y * speed * dt;
             eye.z += up.z * speed * dt;
         }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS and CAM_TYPE != "height") {
             eye.x -= up.x * speed * dt;
             eye.y -= up.y * speed * dt;
             eye.z -= up.z * speed * dt;
         }
+        if (CAM_TYPE == "height") {
+            float u = eye.x / landscape_size + 0.5f;
+            float v = eye.z / landscape_size + 0.5f;
+            float height = sample_height(height_map, hm_weight, hm_height, u, v);
+            eye.y = landscape_base_y + height * 3 + 0.5f;
+        }
+        vec3 target = make3(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
         for (object &b : background) {
             b.M = make_translate(eye);
             b.type = TYPE;
@@ -393,8 +409,35 @@ int main(int argc, char **argv)
         std::fill(sb.begin(), sb.end(), 1.0f);
 
         paint(fb, sb, clip, normals, V, P, l, objs, W, H);
-        paint_landscape(fb, sb, clip, normals, V, P, l, landscape, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y);
+        paint_landscape(fb, sb, clip, normals, base_normals, V, P, l, landscape, additional_landscape_tex, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period_landscape_tex);
         paint_background(fb, sb, clip, normals, V, P, l, background, W, H);
+
+        // mat4 VP = mul(P, V);
+        // mat4 invVP;
+        // inverse(VP, invVP);
+        // float nx = 2.0f * ((float)x + 0.5f) / W - 1.0f;
+        // float ny = 2.0f * ((float)y + 0.5f) / H - 1.0f;
+
+        // vec4 far = mul(invVP, make4(nx, ny, 1.0f, 1.0f));
+        // vec3 world = make3(far.x / far.w, far.y / far.w, far.z / far.w);
+
+        // vec3 dir = make3(world.x - eye.x,
+        //                 world.y - eye.y,
+        //                 world.z - eye.z);
+        // normalize(dir);
+        // float ax = fabsf(dir.x);
+        // float ay = fabsf(dir.y);
+        // float az = fabsf(dir.z);
+
+        // int face;
+        // if (ax >= ay && ax >= az) {
+        //     face = dir.x < 0 ? 3 : 2;
+        // } else if (ay >= ax && ay >= az) {
+        //     face = dir.y < 0 ? 5 : 4;
+        // } else {
+        //     face = dir.z < 0 ? 1 : 0;
+        // }
+
         if (TYPE == "depth") {
             float zmin = 1.0f;
             float zmax = -1.0f;
@@ -478,6 +521,9 @@ int main(int argc, char **argv)
         free(p);
     }
     delete landscape.tex;
+    for (float *p : additional_landscape_tex.copies) {
+        free(p);
+    }
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
