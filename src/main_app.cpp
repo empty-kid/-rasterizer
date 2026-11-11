@@ -165,8 +165,8 @@ int main(int argc, char **argv)
     int H = argc > 4 ? atoi(argv[4]) : 480;
     TYPE = argc > 5 ? argv[5] : "full";
     const char *out_path = argc > 6 ? argv[6] : "height_map";
-    int count = argc > 7 ? int(strtol(argv[7], NULL, 0)) : 3;
-    const char *obj_path = argc > 8 ? argv[8] : "resources/Bunny.obj";
+    int count = argc > 7 ? int(strtol(argv[7], NULL, 0)) : 1;
+    // const char *obj_path = argc > 8 ? argv[8] : "resources/Bunny.obj";
     // const char *tex_path = argc > 9 ? argv[9] : "resources/textures/porcelain.jpg";
     int seed = 42;
     const int hm_weight = 512;
@@ -410,34 +410,15 @@ int main(int argc, char **argv)
 
         paint(fb, sb, clip, normals, V, P, l, objs, W, H);
         paint_landscape(fb, sb, clip, normals, base_normals, V, P, l, landscape, additional_landscape_tex, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period_landscape_tex);
-        paint_background(fb, sb, eye, V, P, l, background, W, H);
 
-        // mat4 VP = mul(P, V);
-        // mat4 invVP;
-        // inverse(VP, invVP);
-        // float nx = 2.0f * ((float)x + 0.5f) / W - 1.0f;
-        // float ny = 2.0f * ((float)y + 0.5f) / H - 1.0f;
-
-        // vec4 far = mul(invVP, make4(nx, ny, 1.0f, 1.0f));
-        // vec3 world = make3(far.x / far.w, far.y / far.w, far.z / far.w);
-
-        // vec3 dir = make3(world.x - eye.x,
-        //                 world.y - eye.y,
-        //                 world.z - eye.z);
-        // normalize(dir);
-        // float ax = fabsf(dir.x);
-        // float ay = fabsf(dir.y);
-        // float az = fabsf(dir.z);
-
-        // int face;
-        // if (ax >= ay && ax >= az) {
-        //     face = dir.x < 0 ? 3 : 2;
-        // } else if (ay >= ax && ay >= az) {
-        //     face = dir.y < 0 ? 5 : 4;
-        // } else {
-        //     face = dir.z < 0 ? 1 : 0;
-        // }
-
+        if (TYPE != "depth"){
+            if (TYPE != "full") {
+            paint_background(fb, sb, clip, normals, V, P, l, background, W, H);
+            } else {
+                paint_background(fb, sb, eye, V, P, background, W, H);
+            }
+        }
+        
         if (TYPE == "depth") {
             float zmin = 1.0f;
             float zmax = -1.0f;
@@ -477,13 +458,12 @@ int main(int argc, char **argv)
                     }
                 }
             }
+        } else if (out_w != W or out_h != H) {
+            upscale_nearest(fb, pixels, W, H, out_w, out_h);
         }
         // } else if (out_w != W or out_h != H) {
         //     upscale_bilinear(fb, pixels, W, H, out_w, out_h);
         // }
-        if (out_w != W or out_h != H) {
-            upscale_nearest(fb, pixels, W, H, out_w, out_h);
-        }
         
 
         glDrawPixels(out_w, out_h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);

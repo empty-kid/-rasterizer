@@ -26,6 +26,55 @@ static float cross_p(V p, vec4 v1, vec4 v2)
 }
 
 template <typename V>
+static void find_dl(vec3 &dl_dx, vec3 &dl_dy, const V (&verts)[3], float s) 
+{
+    float x0 = verts[0].coord.x;
+    float y0 = verts[0].coord.y;
+    float x1 = verts[1].coord.x;
+    float y1 = verts[1].coord.y;
+    float x2 = verts[2].coord.x;
+    float y2 = verts[2].coord.y;
+    dl_dx.M[0] = (y1 - y2) / s;
+    dl_dy.M[0] = (x2 - x1) / s;
+    dl_dx.M[1] = (y2 - y0) / s;
+    dl_dy.M[1] = (x0 - x2) / s;
+    dl_dx.M[2] = (y0 - y1) / s;
+    dl_dy.M[2] = (x1 - x0) / s;
+}
+
+template <typename V>
+const void compute_uv_der(float &du_dx, float &du_dy, float &dv_dx, float &dv_dy, const V (&verts)[3], const vec3 &dl_dx, const vec3 &dl_dy, const vec3 &lambda)
+{
+    float Q = 0.0f;
+    float Nu = 0.0f;
+    float Nv = 0.0f;
+    float dQdx = 0.0f, dNudx = 0.0f, dNvdx = 0.0f;
+    float dQdy = 0.0f, dNudy = 0.0f, dNvdy = 0.0f;
+
+    for (int i = 0; i < 3; ++i) {
+        float q = verts[i].coord.w;
+        float uow = verts[i].uv.x;
+        float vow = verts[i].uv.y;
+        Q  += lambda.M[i] * q;
+        Nu += lambda.M[i] * uow;
+        Nv += lambda.M[i] * vow;
+        dQdx  += dl_dx.M[i] * q;
+        dNudx += dl_dx.M[i] * uow;
+        dNvdx += dl_dx.M[i] * vow;
+        dQdy  += dl_dy.M[i] * q;
+        dNudy += dl_dy.M[i] * uow;
+        dNvdy += dl_dy.M[i] * vow;
+    }
+
+    float invQ2 = 1.0f / (Q * Q);
+
+    du_dx = (dNudx * Q - Nu * dQdx) * (invQ2);
+    du_dy = (dNudy * Q - Nu * dQdy) * (invQ2);
+    dv_dx = (dNvdx * Q - Nv * dQdx) * (invQ2);
+    dv_dy = (dNvdy * Q - Nv * dQdy) * (invQ2);
+}
+
+template <typename V>
 vec3 find_coef_uv(float x, float y, float &u, float &v, const V (&verts)[3], float s) 
 {
     vec2 v_center = make2(x, y);
@@ -42,9 +91,9 @@ vec3 interpolate(const float* tex, int tw, int th, vec2 t, bool clamp)
 {
     if (clamp) {
         if (t.x > 1) t.x = 1;
-        else if(t.x < -1) t.x = 0;
+        else if(t.x < 0) t.x = 0;
         if (t.y > 1) t.y = 1;
-        else if(t.y < -1) t.y = 0;
+        else if(t.y < 0) t.y = 0;
     } else {
         t.x -= floorf(t.x);
         t.y -= floorf(t.y);
@@ -56,14 +105,21 @@ vec3 interpolate(const float* tex, int tw, int th, vec2 t, bool clamp)
     float y = t.y * th - 0.5f;
     int x0 = (int)floorf(x);
     int y0 = (int)floorf(y);
+    int x1 = x0 + 1;
+    int y1 = y0 + 1;
     float alpha = x - x0;
     float beta = y - y0;
 
-    x0 = x0 >= 0 ? x0 : tw - 1;
-    int x1 = x0 + 1 < tw ? x0 + 1 : x0 + 1 - tw;
-    y0 = y0 >= 0 ? y0 : th - 1;
-    int y1 = y0 + 1 < th ? y0 + 1 : y0 + 1 - th;
-
+    if (clamp) {
+        if (x1 >= tw) x1 = tw - 1;
+        if (y1 >= th) y1 = th - 1;
+    } else {
+        x0 = (x0 % tw + tw) % tw;
+        y0 = (y0 % th + th) % th;
+        x1 = (x0 + 1) % tw;
+        y1 = (y0 + 1) % th;
+    }
+    
     vec3 c;
     for (int i = 0; i < 3; i++) {
         float c00 = tex[(y0 * tw + x0) * 3 + i];
@@ -89,8 +145,8 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
-    for (int x = x_min; x <= x_max; x++) {
-        for (int y = y_min; y <= y_max; y++) {
+    for (int y = y_min; y <= y_max; y++) {
+        for (int x = x_min; x <= x_max; x++) {
             float u{}, v{};
             vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
             float e_12 = e.x;
@@ -133,6 +189,9 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
         return;
     }
+    vec3 dl_dx;
+    vec3 dl_dy;
+    find_dl(dl_dx, dl_dy, verts, s);
     int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
     int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
     int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
@@ -141,8 +200,8 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
-    for (int x = x_min; x <= x_max; x++) {
-        for (int y = y_min; y <= y_max; y++) {
+    for (int y = y_min; y <= y_max; y++) {
+        for (int x = x_min; x <= x_max; x++) {
             float u{}, v{};
             vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
             float e_12 = e.x;
@@ -160,72 +219,14 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
                 float dv_dx = 0.0f;
                 float du_dy = 0.0f;
                 float dv_dy = 0.0f;
-                if (x > 0 && x < w - 1) {
-                    float l_u, l_v, r_u, r_v;
+                compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(e_23, e_31, e_12));
+                float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
+                float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
 
-                    find_coef_uv((float)x - 0.5f, (float)y + 0.5f, l_u, l_v, verts, s);
-                    find_coef_uv((float)x + 1.5f, (float)y + 0.5f, r_u, r_v, verts, s);
-
-                    du_dx = (r_u - l_u) * 0.5f;
-                    dv_dx = (r_v - l_v) * 0.5f;
-                } else if (x == 0) {
-                    float r_u, r_v;
-
-                    find_coef_uv((float)x + 1.5f, (float)y + 0.5f, r_u, r_v, verts, s);
-
-                    du_dx = r_u - u;
-                    dv_dx = r_v - v;
-                } else {
-                    float l_u, l_v;
-
-                    find_coef_uv((float)x - 0.5f, (float)y + 0.5f, l_u, l_v, verts, s);
-
-                    du_dx = u - l_u;
-                    dv_dx = v - l_v;
-                }
-
-                if (y > 0 && y < h - 1) {
-                    float d_u, d_v, u_u, u_v;
-
-                    find_coef_uv((float)x + 0.5f, (float)y - 0.5f, d_u, d_v, verts, s);
-                    find_coef_uv((float)x + 0.5f, (float)y + 1.5f, u_u, u_v, verts, s);
-
-                    du_dy = (u_u - d_u) * 0.5f;
-                    dv_dy = (u_v - d_v) * 0.5f;
-                } else if (y == 0) {
-                    float u_u, u_v;
-
-                    find_coef_uv((float)x + 0.5f, (float)y + 1.5f, u_u, u_v, verts, s);
-
-                    du_dy = u_u - u;
-                    dv_dy = u_v - v;
-                } else {
-                    float d_u, d_v;
-
-                    find_coef_uv((float)x + 0.5f, (float)y - 0.5f, d_u, d_v, verts, s);
-
-                    du_dy = u - d_u;
-                    dv_dy = v - d_v;
-                }
-
-                float tw = (float)tex->cop_w[0];
-                float th = (float)tex->cop_h[0];
-                float rho_x = sqrtf(
-                    du_dx * du_dx * tw * tw +
-                    dv_dx * dv_dx * th * th
-                );
-                float rho_y = sqrtf(
-                    du_dy * du_dy * tw * tw +
-                    dv_dy * dv_dy * th * th
-                );
                 float rho = fmaxf(rho_x, rho_y);
                 float level = log2f(fmaxf(rho, 1.0f));
 
-                if (level < 0.0f) {
-                    level = 0.0f;
-                }
-
-                if (level < 0) level = 0;
+                if (level < 0.0f) level = 0;
                 if (ceilf(level) >= tex->cop_w.size()) level = tex->cop_w.size() - 1;
 
                 if (type == "mip") {
@@ -273,8 +274,8 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
-    for (int x = x_min; x <= x_max; x++) {
-        for (int y = y_min; y <= y_max; y++) {
+    for (int y = y_min; y <= y_max; y++) {
+        for (int x = x_min; x <= x_max; x++) {
             float u{}, v{};
             vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
             float e_12 = e.x;
@@ -331,6 +332,9 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
         return;
     }
+    vec3 dl_dx;
+    vec3 dl_dy;
+    find_dl(dl_dx, dl_dy, verts, s);
     int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
     int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
     int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
@@ -339,8 +343,8 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
-    for (int x = x_min; x <= x_max; x++) {
-        for (int y = y_min; y <= y_max; y++) {
+    for (int y = y_min; y <= y_max; y++) {
+        for (int x = x_min; x <= x_max; x++) {
             float u{}, v{};
             vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
             float e_12 = e.x;
@@ -371,9 +375,6 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
                         data[(y * w + x) * 3 + 1] = (n.y + 1) / 2;
                         data[(y * w + x) * 3 + 2] = (n.z + 1) / 2;
                     } else if (type == "uv") {
-                        float iw = e_23 * verts[0].coord.w + e_31 * verts[1].coord.w + e_12 * verts[2].coord.w;
-                        float u  = (e_23 * verts[0].uv.x + e_31 * verts[1].uv.x + e_12 * verts[2].uv.x) / iw;
-                        float v  = (e_23 * verts[0].uv.y + e_31 * verts[1].uv.y + e_12 * verts[2].uv.y) / iw;
                         u -= floorf(u);
                         v -= floorf(v);
                         // u = fminf(fmaxf(u, 0.0f), 1.0f);
@@ -384,77 +385,18 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
                     } else if (type == "depth") {
                         continue;
                     } else {
-                        
                         float du_dx = 0.0f;
                         float dv_dx = 0.0f;
                         float du_dy = 0.0f;
                         float dv_dy = 0.0f;
-                        if (x > 0 && x < w - 1) {
-                            float l_u, l_v, r_u, r_v;
+                        compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(e_23, e_31, e_12));
+                        float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
+                        float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
 
-                            find_coef_uv((float)x - 0.5f, (float)y + 0.5f, l_u, l_v, verts, s);
-                            find_coef_uv((float)x + 1.5f, (float)y + 0.5f, r_u, r_v, verts, s);
-
-                            du_dx = (r_u - l_u) * 0.5f;
-                            dv_dx = (r_v - l_v) * 0.5f;
-                        } else if (x == 0) {
-                            float r_u, r_v;
-
-                            find_coef_uv((float)x + 1.5f, (float)y + 0.5f, r_u, r_v, verts, s);
-
-                            du_dx = r_u - u;
-                            dv_dx = r_v - v;
-                        } else {
-                            float l_u, l_v;
-
-                            find_coef_uv((float)x - 0.5f, (float)y + 0.5f, l_u, l_v, verts, s);
-
-                            du_dx = u - l_u;
-                            dv_dx = v - l_v;
-                        }
-
-                        if (y > 0 && y < h - 1) {
-                            float d_u, d_v, u_u, u_v;
-
-                            find_coef_uv((float)x + 0.5f, (float)y - 0.5f, d_u, d_v, verts, s);
-                            find_coef_uv((float)x + 0.5f, (float)y + 1.5f, u_u, u_v, verts, s);
-
-                            du_dy = (u_u - d_u) * 0.5f;
-                            dv_dy = (u_v - d_v) * 0.5f;
-                        } else if (y == 0) {
-                            float u_u, u_v;
-
-                            find_coef_uv((float)x + 0.5f, (float)y + 1.5f, u_u, u_v, verts, s);
-
-                            du_dy = u_u - u;
-                            dv_dy = u_v - v;
-                        } else {
-                            float d_u, d_v;
-
-                            find_coef_uv((float)x + 0.5f, (float)y - 0.5f, d_u, d_v, verts, s);
-
-                            du_dy = u - d_u;
-                            dv_dy = v - d_v;
-                        }
-
-                        float tw = (float)tex->cop_w[0];
-                        float th = (float)tex->cop_h[0];
-                        float rho_x = sqrtf(
-                            du_dx * du_dx * tw * tw +
-                            dv_dx * dv_dx * th * th
-                        );
-                        float rho_y = sqrtf(
-                            du_dy * du_dy * tw * tw +
-                            dv_dy * dv_dy * th * th
-                        );
                         float rho = fmaxf(rho_x, rho_y);
                         float level = log2f(fmaxf(rho, 1.0f));
 
-                        if (level < 0.0f) {
-                            level = 0.0f;
-                        }
-
-                        if (level < 0) level = 0;
+                        if (level < 0.0f) level = 0.0f;
                         if (ceilf(level) >= tex->cop_w.size()) level = tex->cop_w.size() - 1;
 
                         if (type == "mip") {

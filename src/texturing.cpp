@@ -13,14 +13,20 @@ void create_texture(texture &tex, const char* tex_path)
         float *prev = tex.copies.back();
         for (int y = 0; y < nh; y++) {
             for (int x = 0; x < nw; x++) {
-                int x0 = x * 2;
-                int x1 = x0 + 1;
-                int y0 = y * 2;
-                int y1 = y0 + 1;
-                if (x1 >= w) x1 = w - 1;
-                if (y1 >= h) y1 = h - 1;
                 for (int c = 0; c < 3; c++) {
-                    copy[(y * nw + x) * 3 + c] = (prev[(y0 * w + x0) * 3 + c] + prev[(y0 * w + x1) * 3 + c] + prev[(y1 * w + x0) * 3 + c] + prev[(y1 * w + x1) * 3 + c]) / 4.0f;
+                    float sum = 0.0f;
+                    int count = 0;
+                    for (int dy = 0; dy < 2; ++dy) {
+                        for (int dx = 0; dx < 2; ++dx) {
+                            int sx = 2 * x + dx;
+                            int sy = 2 * y + dy;
+                            if (sx < w && sy < h) {
+                                sum += prev[(sy * w + sx) * 3 + c];
+                                ++count;
+                            }
+                        }
+                    }
+                    copy[(y * nw + x) * 3 + c] = sum / count;
                 }
             }
         }
