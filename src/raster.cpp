@@ -75,16 +75,13 @@ const void compute_uv_der(float &du_dx, float &du_dy, float &dv_dx, float &dv_dy
 }
 
 template <typename V>
-vec3 find_coef_uv(float x, float y, float &u, float &v, const V (&verts)[3], float s) 
+vec3 find_coef(float x, float y, const V (&verts)[3], float s) 
 {
     vec2 v_center = make2(x, y);
     float e_12 = cross_p(v_center, verts[0].coord, verts[1].coord) / s;
     float e_23 = cross_p(v_center, verts[1].coord, verts[2].coord) / s;
     float e_31 = cross_p(v_center, verts[2].coord, verts[0].coord) / s;
-    float iw = e_23 * verts[0].coord.w + e_31 * verts[1].coord.w + e_12 * verts[2].coord.w;
-    u = (e_23 * verts[0].uv.x + e_31 * verts[1].uv.x + e_12 * verts[2].uv.x) / iw;
-    v = (e_23 * verts[0].uv.y + e_31 * verts[1].uv.y + e_12 * verts[2].uv.y) / iw;
-    return make3(e_12, e_23, e_31);
+    return make3(e_23, e_31, e_12);
 }
 
 vec3 interpolate(const float* tex, int tw, int th, vec2 t, bool clamp) 
@@ -131,67 +128,79 @@ vec3 interpolate(const float* tex, int tw, int th, vec2 t, bool clamp)
     return c;
 }
 
-void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[3], vec3 l, vec3 k_a, vec3 k_d, const std::string &type, bool back_sides)
+template <typename V>
+void pixel_shader_normals(float *pixel, const V (&verts)[3], const vec3 &bc_weights)
 {
-    float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
-    if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
-        return;
-    }
-    int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
-    int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
-    int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
-    int y_min = (int)min(verts[0].coord.y, min(verts[1].coord.y, verts[2].coord.y));
-    x_max = x_max < w ? x_max : w - 1;
-    y_max = y_max < h ? y_max : h - 1;
-    x_min = x_min > 0 ? x_min : 0;
-    y_min = y_min > 0 ? y_min : 0;
-    for (int y = y_min; y <= y_max; y++) {
-        for (int x = x_min; x <= x_max; x++) {
-            float u{}, v{};
-            vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
-            float e_12 = e.x;
-            float e_23 = e.y;
-            float e_31 = e.z;
-            if ((e_12 >= 0 && e_23 >= 0 && e_31 >= 0) || (e_12 <= 0 && e_23 <= 0 && e_31 <= 0)) {
-                float z = verts[0].coord.z * e_23 + verts[1].coord.z * e_31 + verts[2].coord.z * e_12;
-                if (z > z_buf[y * w + x]) {
-                    continue;
-                } else {
-                    z_buf[y * w + x] = z;
-                }
-                if (type == "normals") {
-                    vec3 n;
-                    n.x = verts[0].normals.x * e_23 + verts[1].normals.x * e_31 + verts[2].normals.x * e_12;
-                    n.y = verts[0].normals.y * e_23 + verts[1].normals.y * e_31 + verts[2].normals.y * e_12;
-                    n.z = verts[0].normals.z * e_23 + verts[1].normals.z * e_31 + verts[2].normals.z * e_12;
-                    normalize(n);
-                    data[(y * w + x) * 3 + 0] = (n.x + 1) / 2;
-                    data[(y * w + x) * 3 + 1] = (n.y + 1) / 2;
-                    data[(y * w + x) * 3 + 2] = (n.z + 1) / 2;
-                } else if (type == "uv") {
-                
-                    u -= floorf(u);
-                    v -= floorf(v);
-                    // u = fminf(fmaxf(u, 0.0f), 1.0f);
-                    // v = fminf(fmaxf(v, 0.0f), 1.0f);
-                    data[(y * w + x) * 3 + 0] = u;
-                    data[(y * w + x) * 3 + 1] = v;
-                    data[(y * w + x) * 3 + 2] = 0;
-                }
-            }  
-        }
-    }
+    vec3 n;
+    n.x = verts[0].normals.x * bc_weights.x + verts[1].normals.x * bc_weights.y + verts[2].normals.x * bc_weights.z;
+    n.y = verts[0].normals.y * bc_weights.x + verts[1].normals.y * bc_weights.y + verts[2].normals.y * bc_weights.z;
+    n.z = verts[0].normals.z * bc_weights.x + verts[1].normals.z * bc_weights.y + verts[2].normals.z * bc_weights.z;
+    normalize(n);
+    pixel[0] = (n.x + 1) / 2;
+    pixel[1] = (n.y + 1) / 2;
+    pixel[2] = (n.z + 1) / 2;
 }
 
-void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[3], vec3 l, vec3 k_a, vec3 k_d, const texture *tex, const std::string &type, bool back_sides)
+void pixel_shader_uv(float *pixel, float u, float v)
+{
+    u -= floorf(u);
+    v -= floorf(v);
+    // u = fminf(fmaxf(u, 0.0f), 1.0f);
+    // v = fminf(fmaxf(v, 0.0f), 1.0f);
+    pixel[0] = u;
+    pixel[1] = v;
+    pixel[2] = 0;
+}
+
+void pixel_shader_mip(float *pixel, float level)
+{
+    int idx = floorf(level) < 6 ? floorf(level) : 5;
+    vec3 c = mip_colors[idx];
+    pixel[0] = c.x;
+    pixel[1] = c.y;
+    pixel[2] = c.z;
+}
+
+template <typename V>
+void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d)
+{
+    vec3 n;
+    n.x = verts[0].normals.x * bc_weights.x + verts[1].normals.x * bc_weights.y + verts[2].normals.x * bc_weights.z;
+    n.y = verts[0].normals.y * bc_weights.x + verts[1].normals.y * bc_weights.y + verts[2].normals.y * bc_weights.z;
+    n.z = verts[0].normals.z * bc_weights.x + verts[1].normals.z * bc_weights.y + verts[2].normals.z * bc_weights.z;
+    normalize(n);
+    float nl = dot(n, l) > 0 ? dot(n, l) : 0;
+    pixel[0] = tc.x * (k_a.x + k_d.x * nl);
+    pixel[1] = tc.y * (k_a.y + k_d.y * nl);
+    pixel[2] = tc.z * (k_a.z + k_d.z * nl);
+}
+
+template <typename V>
+void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &add_tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d)
+{
+    vec3 n;
+    n.x = verts[0].normals.x * bc_weights.x + verts[1].normals.x * bc_weights.y + verts[2].normals.x * bc_weights.z;
+    n.y = verts[0].normals.y * bc_weights.x + verts[1].normals.y * bc_weights.y + verts[2].normals.y * bc_weights.z;
+    n.z = verts[0].normals.z * bc_weights.x + verts[1].normals.z * bc_weights.y + verts[2].normals.z * bc_weights.z;
+    normalize(n);
+    float base_normal_y = verts[0].base_normals.y * bc_weights.x + verts[1].base_normals.y * bc_weights.y + verts[2].base_normals.y * bc_weights.z;
+    float nl = dot(n, l) > 0 ? dot(n, l) : 0;
+    pixel[0] = tc.x * (k_a.x + k_d.x * nl) * base_normal_y + add_tc.x * (k_a.x + k_d.x * nl) * (1 - base_normal_y);
+    pixel[1] = tc.y * (k_a.y + k_d.y * nl) * base_normal_y + add_tc.y * (k_a.y + k_d.y * nl) * (1 - base_normal_y);
+    pixel[2] = tc.z * (k_a.z + k_d.z * nl) * base_normal_y + add_tc.z * (k_a.z + k_d.z * nl) * (1 - base_normal_y);
+}
+
+void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const std::string &type, bool back_sides)
 {
     float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
         return;
     }
-    vec3 dl_dx;
-    vec3 dl_dy;
-    find_dl(dl_dx, dl_dy, verts, s);
+    if (type == "full" or type == "mip") {
+        vec3 dl_dx;
+        vec3 dl_dy;
+        find_dl(dl_dx, dl_dy, verts, s);
+    }
     int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
     int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
     int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
@@ -200,43 +209,98 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
+    float dy3 = (verts[1].coord.x - verts[0].coord.x) / s;
+    float dx3 = -(verts[1].coord.y - verts[0].coord.y) / s;
+    float dy1 = (verts[2].coord.x - verts[1].coord.x) / s;
+    float dx1 = -(verts[2].coord.y - verts[1].coord.y) / s;
+    float dy2 = (verts[0].coord.x - verts[2].coord.x) / s;
+    float dx2 = -(verts[0].coord.y - verts[2].coord.y) / s;
+    vec3 dx = {dx1, dx2, dx3};
+    vec3 dy = {dy1, dy2, dy3};
+    vec3 e = find_coef((float)x_min + 0.5, (float)y_min + 0.5, verts, s);
+    float level{};
+    if (type == "full" or type == "mip") {
+        vec3 dl_dx;
+        vec3 dl_dy;
+        find_dl(dl_dx, dl_dy, verts, s);
+        float du_dx, du_dy, dv_dx, dv_dy;
+        compute_uv_der(
+            du_dx, du_dy, dv_dx, dv_dy,
+            verts, dl_dx, dl_dy,
+            make3(1.0f / 3, 1.0f / 3, 1.0f / 3)
+        );
+
+        float rho_x = hypotf(
+            du_dx * tex->cop_w[0],
+            dv_dx * tex->cop_h[0]
+        );
+        float rho_y = hypotf(
+            du_dy * tex->cop_w[0],
+            dv_dy * tex->cop_h[0]
+        );
+        level = log2f(fmaxf(fmaxf(rho_x, rho_y), 1.0f));
+        level = fminf(level, float(tex->copies.size() - 1));
+    }
+
+    vec3 row_weights = e;
     for (int y = y_min; y <= y_max; y++) {
+        if (y > y_min) {
+            for (int k = 0; k < 3; ++k)
+                row_weights.M[k] += dy.M[k];
+        }
+        vec3 bc_weights = row_weights;
         for (int x = x_min; x <= x_max; x++) {
-            float u{}, v{};
-            vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
-            float e_12 = e.x;
-            float e_23 = e.y;
-            float e_31 = e.z;
-            if ((e_12 >= 0 && e_23 >= 0 && e_31 >= 0) || (e_12 <= 0 && e_23 <= 0 && e_31 <= 0)) {
-                float z = verts[0].coord.z * e_23 + verts[1].coord.z * e_31 + verts[2].coord.z * e_12;
+            if (x > x_min) {
+            for (int k = 0; k < 3; ++k)
+                bc_weights.M[k] += dx.M[k];
+            }
+            if ((bc_weights.z >= 0 && bc_weights.x >= 0 && bc_weights.y >= 0) || (bc_weights.z <= 0 && bc_weights.x <= 0 && bc_weights.y <= 0)) {
+                float z = verts[0].coord.z * bc_weights.x + verts[1].coord.z * bc_weights.y + verts[2].coord.z * bc_weights.z;
                 if (z > z_buf[y * w + x]) {
                     continue;
                 } else {
                     z_buf[y * w + x] = z;
                 }
-                
-                float du_dx = 0.0f;
-                float dv_dx = 0.0f;
-                float du_dy = 0.0f;
-                float dv_dy = 0.0f;
-                compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(e_23, e_31, e_12));
-                float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
-                float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
 
-                float rho = fmaxf(rho_x, rho_y);
-                float level = log2f(fmaxf(rho, 1.0f));
+                if (type == "depth") {
+                    continue;
+                } else if (type == "normals") {
+                    pixel_shader_normals(&data[(y * w + x) * 3], verts, bc_weights);
+                    continue;
+                }
+
+                float iw = bc_weights.x * verts[0].coord.w + bc_weights.y * verts[1].coord.w + bc_weights.z * verts[2].coord.w;
+                float u  = (bc_weights.x * verts[0].uv.x + bc_weights.y * verts[1].uv.x + bc_weights.z * verts[2].uv.x) / iw;
+                float v  = (bc_weights.x * verts[0].uv.y + bc_weights.y * verts[1].uv.y + bc_weights.z * verts[2].uv.y) / iw;
+                
+                if (type == "uv") {
+                    pixel_shader_uv(&data[(y * w + x) * 3], u, v);
+                    continue;
+                }
+                
+                
+                // float dist = (2.0f * 0.1f * 100.0f) / (100.0f + 0.1f - z * (100.0f - 0.1f));
+                // float level = log2f(dist / 1.5f);
+
+                // float du_dx = 0.0f;
+                // float dv_dx = 0.0f;
+                // float du_dy = 0.0f;
+                // float dv_dy = 0.0f;
+                // compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(bc_weights.x, bc_weights.y, bc_weights.z));
+                // float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
+                // float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
+
+                // float rho = fmaxf(rho_x, rho_y);
+                // float level = log2f(fmaxf(rho, 1.0f));
 
                 if (level < 0.0f) level = 0;
                 if (ceilf(level) >= tex->cop_w.size()) level = tex->cop_w.size() - 1;
 
                 if (type == "mip") {
-                    int idx = floorf(level) < 6 ? floorf(level) : 5;
-                    vec3 c = mip_colors[idx];
-                    data[(y * w + x) * 3 + 0] = c.x;
-                    data[(y * w + x) * 3 + 1] = c.y;
-                    data[(y * w + x) * 3 + 2] = c.z;
+                    pixel_shader_mip(&data[(y * w + x) * 3], level);
                     continue;
                 }
+
                 vec3 tc;
                 if (level != floorf(level)) {
                     vec3 tc1 = interpolate(tex->copies[(size_t)floorf(level)], tex->cop_w[(size_t)floorf(level)], tex->cop_h[(size_t)floorf(level)], make2(u, v), false);
@@ -246,15 +310,7 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
                 } else {
                     tc = interpolate(tex->copies[(size_t)level], tex->cop_w[(size_t)level], tex->cop_h[(size_t)level], make2(u, v), false);
                 }
-                vec3 n;
-                n.x = verts[0].normals.x * e_23 + verts[1].normals.x * e_31 + verts[2].normals.x * e_12;
-                n.y = verts[0].normals.y * e_23 + verts[1].normals.y * e_31 + verts[2].normals.y * e_12;
-                n.z = verts[0].normals.z * e_23 + verts[1].normals.z * e_31 + verts[2].normals.z * e_12;
-                normalize(n);
-                float nl = dot(n, l) > 0 ? dot(n, l) : 0;
-                data[(y * w + x) * 3 + 0] = tc.x * (k_a.x + k_d.x * nl);
-                data[(y * w + x) * 3 + 1] = tc.y * (k_a.y + k_d.y * nl);
-                data[(y * w + x) * 3 + 2] = tc.z * (k_a.z + k_d.z * nl);
+                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, l, k_a, k_d); 
             }
         }
     }
@@ -274,67 +330,70 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
+    float dy3 = (verts[1].coord.x - verts[0].coord.x) / s;
+    float dx3 = -(verts[1].coord.y - verts[0].coord.y) / s;
+    float dy1 = (verts[2].coord.x - verts[1].coord.x) / s;
+    float dx1 = -(verts[2].coord.y - verts[1].coord.y) / s;
+    float dy2 = (verts[0].coord.x - verts[2].coord.x) / s;
+    float dx2 = -(verts[0].coord.y - verts[2].coord.y) / s;
+    vec3 dx = {dx1, dx2, dx3};
+    vec3 dy = {dy1, dy2, dy3};
+    vec3 e = find_coef((float)x_min + 0.5, (float)y_min + 0.5, verts, s);
+    vec3 row_weights = e;
+    
     for (int y = y_min; y <= y_max; y++) {
+        if (y > y_min) {
+            for (int k = 0; k < 3; ++k)
+                row_weights.M[k] += dy.M[k];
+        }
+        vec3 bc_weights = row_weights;
         for (int x = x_min; x <= x_max; x++) {
-            float u{}, v{};
-            vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
-            float e_12 = e.x;
-            float e_23 = e.y;
-            float e_31 = e.z;
-
-            if ((e_12 >= 0 && e_23 >= 0 && e_31 >= 0) || (e_12 <= 0 && e_23 <= 0 && e_31 <= 0)) {
-                float z = verts[0].coord.z * e_23 + verts[1].coord.z * e_31 + verts[2].coord.z * e_12;
+            if (x > x_min) {
+            for (int k = 0; k < 3; ++k)
+                bc_weights.M[k] += dx.M[k];
+            }
+            if ((bc_weights.z >= 0 && bc_weights.x >= 0 && bc_weights.y >= 0) || (bc_weights.z <= 0 && bc_weights.x <= 0 && bc_weights.y <= 0)) {
+                float z = verts[0].coord.z * bc_weights.x + verts[1].coord.z * bc_weights.y + verts[2].coord.z * bc_weights.z;
                 if (z > z_buf[y * w + x]) {
                     continue;
                 } else {
                     z_buf[y * w + x] = z;
                 }
-                if (type == "normals") {
-                    vec3 n;
-                    n.x = verts[0].normals.x * e_23 + verts[1].normals.x * e_31 + verts[2].normals.x * e_12;
-                    n.y = verts[0].normals.y * e_23 + verts[1].normals.y * e_31 + verts[2].normals.y * e_12;
-                    n.z = verts[0].normals.z * e_23 + verts[1].normals.z * e_31 + verts[2].normals.z * e_12;
-                    normalize(n);
-                    data[(y * w + x) * 3 + 0] = (n.x + 1) / 2;
-                    data[(y * w + x) * 3 + 1] = (n.y + 1) / 2;
-                    data[(y * w + x) * 3 + 2] = (n.z + 1) / 2;
-                } else if (type == "uv") {
-                    u -= floorf(u);
-                    v -= floorf(v);
-                    // u = fminf(fmaxf(u, 0.0f), 1.0f);
-                    // v = fminf(fmaxf(v, 0.0f), 1.0f);
-                    data[(y * w + x) * 3 + 0] = u;
-                    data[(y * w + x) * 3 + 1] = v;
-                    data[(y * w + x) * 3 + 2] = 0;
-                } else if (type == "depth") {
+                if (type == "depth") {
                     continue;
-                } else {
-                    if (type == "mip") {
-                        vec3 c = mip_colors[0];
-                        data[(y * w + x) * 3 + 0] = c.x;
-                        data[(y * w + x) * 3 + 1] = c.y;
-                        data[(y * w + x) * 3 + 2] = c.z;
-                        continue;
-                    }
-                    vec3 tc = interpolate(tex->copies[0], tex->cop_w[0], tex->cop_h[0], make2(u, 1.0f - v), false);
-                    data[(y * w + x) * 3 + 0] = tc.x;
-                    data[(y * w + x) * 3 + 1] = tc.y;
-                    data[(y * w + x) * 3 + 2] = tc.z;
+                } else if (type == "normals") {
+                    pixel_shader_normals(&data[(y * w + x) * 3], verts, bc_weights);
+                    continue;
                 }
+                
+                float iw = bc_weights.x * verts[0].coord.w + bc_weights.y * verts[1].coord.w + bc_weights.z * verts[2].coord.w;
+                float u  = (bc_weights.x * verts[0].uv.x + bc_weights.y * verts[1].uv.x + bc_weights.z * verts[2].uv.x) / iw;
+                float v  = (bc_weights.x * verts[0].uv.y + bc_weights.y * verts[1].uv.y + bc_weights.z * verts[2].uv.y) / iw;
+                
+                if (type == "uv") {
+                    pixel_shader_uv(&data[(y * w + x) * 3], u, v);
+                    continue;
+                }
+
+                if (type == "mip") {
+                    pixel_shader_mip(&data[(y * w + x) * 3], 0);
+                    continue;
+                }
+                vec3 tc = interpolate(tex->copies[0], tex->cop_w[0], tex->cop_h[0], make2(u, 1.0f - v), false);
+                data[(y * w + x) * 3 + 0] = tc.x;
+                data[(y * w + x) * 3 + 1] = tc.y;
+                data[(y * w + x) * 3 + 2] = tc.z;
             }
         }
     }
 }
 
-void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts)[3], vec3 l, vec3 k_a, vec3 k_d, const texture *tex, const texture &add_tex, const std::string &type, bool back_sides)
+void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const texture &add_tex, const std::string &type, bool back_sides)
 {
     float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
         return;
     }
-    vec3 dl_dx;
-    vec3 dl_dy;
-    find_dl(dl_dx, dl_dy, verts, s);
     int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
     int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
     int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
@@ -343,98 +402,112 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
     y_max = y_max < h ? y_max : h - 1;
     x_min = x_min > 0 ? x_min : 0;
     y_min = y_min > 0 ? y_min : 0;
-    for (int y = y_min; y <= y_max; y++) {
-        for (int x = x_min; x <= x_max; x++) {
-            float u{}, v{};
-            vec3 e = find_coef_uv((float)x + 0.5, (float)y + 0.5, u, v, verts, s);
-            float e_12 = e.x;
-            float e_23 = e.y;
-            float e_31 = e.z;
+    float dy3 = (verts[1].coord.x - verts[0].coord.x) / s;
+    float dx3 = -(verts[1].coord.y - verts[0].coord.y) / s;
+    float dy1 = (verts[2].coord.x - verts[1].coord.x) / s;
+    float dx1 = -(verts[2].coord.y - verts[1].coord.y) / s;
+    float dy2 = (verts[0].coord.x - verts[2].coord.x) / s;
+    float dx2 = -(verts[0].coord.y - verts[2].coord.y) / s;
+    vec3 dx = {dx1, dx2, dx3};
+    vec3 dy = {dy1, dy2, dy3};
+    vec3 e = find_coef((float)x_min + 0.5, (float)y_min + 0.5, verts, s);
+    float level{};
+    if (type == "full" or type == "mip") {
+        vec3 dl_dx;
+        vec3 dl_dy;
+        find_dl(dl_dx, dl_dy, verts, s);
+        float du_dx, du_dy, dv_dx, dv_dy;
+        compute_uv_der(
+            du_dx, du_dy, dv_dx, dv_dy,
+            verts, dl_dx, dl_dy,
+            make3(1.0f / 3, 1.0f / 3, 1.0f / 3)
+        );
 
-            if ((e_12 >= 0 && e_23 >= 0 && e_31 >= 0) || (e_12 <= 0 && e_23 <= 0 && e_31 <= 0)) {
-                float z = verts[0].coord.z * e_23 + verts[1].coord.z * e_31 + verts[2].coord.z * e_12;
+        float rho_x = hypotf(
+            du_dx * tex->cop_w[0],
+            dv_dx * tex->cop_h[0]
+        );
+        float rho_y = hypotf(
+            du_dy * tex->cop_w[0],
+            dv_dy * tex->cop_h[0]
+        );
+        level = log2f(fmaxf(fmaxf(rho_x, rho_y), 1.0f));
+        level = fminf(level, float(tex->copies.size() - 1));
+    }
+
+    vec3 row_weights = e;
+    for (int y = y_min; y <= y_max; y++) {
+        if (y > y_min) {
+            for (int k = 0; k < 3; ++k)
+                row_weights.M[k] += dy.M[k];
+        }
+        vec3 bc_weights = row_weights;
+        for (int x = x_min; x <= x_max; x++) {
+            if (x > x_min) {
+            for (int k = 0; k < 3; ++k)
+                bc_weights.M[k] += dx.M[k];
+            }
+            if ((bc_weights.z >= 0 && bc_weights.x >= 0 && bc_weights.y >= 0) || (bc_weights.z <= 0 && bc_weights.x <= 0 && bc_weights.y <= 0)) {
+                float z = verts[0].coord.z * bc_weights.x + verts[1].coord.z * bc_weights.y + verts[2].coord.z * bc_weights.z;
                 if (z > z_buf[y * w + x]) {
                     continue;
                 } else {
                     z_buf[y * w + x] = z;
                 }
-                if ((e_12 >= 0 && e_23 >= 0 && e_31 >= 0) || (e_12 <= 0 && e_23 <= 0 && e_31 <= 0)) {
-                    float z = verts[0].coord.z * e_23 + verts[1].coord.z * e_31 + verts[2].coord.z * e_12;
-                    if (z > z_buf[y * w + x]) {
-                        continue;
-                    } else {
-                        z_buf[y * w + x] = z;
-                    }
-                    if (type == "normals") {
-                        vec3 n;
-                        n.x = verts[0].normals.x * e_23 + verts[1].normals.x * e_31 + verts[2].normals.x * e_12;
-                        n.y = verts[0].normals.y * e_23 + verts[1].normals.y * e_31 + verts[2].normals.y * e_12;
-                        n.z = verts[0].normals.z * e_23 + verts[1].normals.z * e_31 + verts[2].normals.z * e_12;
-                        normalize(n);
-                        data[(y * w + x) * 3 + 0] = (n.x + 1) / 2;
-                        data[(y * w + x) * 3 + 1] = (n.y + 1) / 2;
-                        data[(y * w + x) * 3 + 2] = (n.z + 1) / 2;
-                    } else if (type == "uv") {
-                        u -= floorf(u);
-                        v -= floorf(v);
-                        // u = fminf(fmaxf(u, 0.0f), 1.0f);
-                        // v = fminf(fmaxf(v, 0.0f), 1.0f);
-                        data[(y * w + x) * 3 + 0] = u;
-                        data[(y * w + x) * 3 + 1] = v;
-                        data[(y * w + x) * 3 + 2] = 0;
-                    } else if (type == "depth") {
-                        continue;
-                    } else {
-                        float du_dx = 0.0f;
-                        float dv_dx = 0.0f;
-                        float du_dy = 0.0f;
-                        float dv_dy = 0.0f;
-                        compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(e_23, e_31, e_12));
-                        float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
-                        float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
 
-                        float rho = fmaxf(rho_x, rho_y);
-                        float level = log2f(fmaxf(rho, 1.0f));
-
-                        if (level < 0.0f) level = 0.0f;
-                        if (ceilf(level) >= tex->cop_w.size()) level = tex->cop_w.size() - 1;
-
-                        if (type == "mip") {
-                            int idx = floorf(level) < 6 ? floorf(level) : 5;
-                            vec3 c = mip_colors[idx];
-                            data[(y * w + x) * 3 + 0] = c.x;
-                            data[(y * w + x) * 3 + 1] = c.y;
-                            data[(y * w + x) * 3 + 2] = c.z;
-                            continue;
-                        }
-                        vec3 tc;
-                        vec3 add_tc;
-                        if (level != floorf(level)) {
-                            vec3 tc1 = interpolate(tex->copies[(size_t)floorf(level)], tex->cop_w[(size_t)floorf(level)], tex->cop_h[(size_t)floorf(level)], make2(u, v), false);
-                            vec3 tc2 = interpolate(tex->copies[(size_t)floorf(level) + 1], tex->cop_w[(size_t)floorf(level) + 1], tex->cop_h[(size_t)floorf(level) + 1], make2(u, v), false);
-                            float k = 1 - (level - floorf(level));
-                            tc = make3(tc1.x * k + tc2.x * (1 - k), tc1.y * k + tc2.y * (1 - k), tc1.z * k + tc2.z * (1 - k));
-
-                            vec3 add_tc1 = interpolate(add_tex.copies[(size_t)floorf(level)], add_tex.cop_w[(size_t)floorf(level)], add_tex.cop_h[(size_t)floorf(level)], make2(u, v), false);
-                            vec3 add_tc2 = interpolate(add_tex.copies[(size_t)floorf(level) + 1], add_tex.cop_w[(size_t)floorf(level) + 1], add_tex.cop_h[(size_t)floorf(level) + 1], make2(u, v), false);
-                            k = 1 - (level - floorf(level));
-                            add_tc = make3(add_tc1.x * k + add_tc2.x * (1 - k), add_tc1.y * k + add_tc2.y * (1 - k), add_tc1.z * k + add_tc2.z * (1 - k));
-                        } else {
-                            tc = interpolate(tex->copies[(size_t)level], tex->cop_w[(size_t)level], tex->cop_h[(size_t)level], make2(u, v), false);
-                            add_tc = interpolate(add_tex.copies[(size_t)level], add_tex.cop_w[(size_t)level], add_tex.cop_h[(size_t)level], make2(u, v), false);
-                        }
-                        vec3 n;
-                        n.x = verts[0].normals.x * e_23 + verts[1].normals.x * e_31 + verts[2].normals.x * e_12;
-                        n.y = verts[0].normals.y * e_23 + verts[1].normals.y * e_31 + verts[2].normals.y * e_12;
-                        n.z = verts[0].normals.z * e_23 + verts[1].normals.z * e_31 + verts[2].normals.z * e_12;
-                        normalize(n);
-                        float base_normal_y = verts[0].base_normals.y * e_23 + verts[1].base_normals.y * e_31 + verts[2].base_normals.y * e_12;
-                        float nl = dot(n, l) > 0 ? dot(n, l) : 0;
-                        data[(y * w + x) * 3 + 0] = tc.x * (k_a.x + k_d.x * nl) * base_normal_y + add_tc.x * (k_a.x + k_d.x * nl) * (1 - base_normal_y);
-                        data[(y * w + x) * 3 + 1] = tc.y * (k_a.y + k_d.y * nl) * base_normal_y + add_tc.y * (k_a.y + k_d.y * nl) * (1 - base_normal_y);
-                        data[(y * w + x) * 3 + 2] = tc.z * (k_a.z + k_d.z * nl) * base_normal_y + add_tc.z * (k_a.z + k_d.z * nl) * (1 - base_normal_y);
-                    }
+                if (type == "depth") {
+                    continue;
+                } else if (type == "normals") {
+                    pixel_shader_normals(&data[(y * w + x) * 3], verts, bc_weights);
+                    continue;
                 }
+
+                float iw = bc_weights.x * verts[0].coord.w + bc_weights.y * verts[1].coord.w + bc_weights.z * verts[2].coord.w;
+                float u  = (bc_weights.x * verts[0].uv.x + bc_weights.y * verts[1].uv.x + bc_weights.z * verts[2].uv.x) / iw;
+                float v  = (bc_weights.x * verts[0].uv.y + bc_weights.y * verts[1].uv.y + bc_weights.z * verts[2].uv.y) / iw;
+                
+                if (type == "uv") {
+                    pixel_shader_uv(&data[(y * w + x) * 3], u, v);
+                    continue;
+                }
+                
+                
+                // float dist = (2.0f * 0.1f * 100.0f) / (100.0f + 0.1f - z * (100.0f - 0.1f));
+                // float level = log2f(dist / 1.5f);
+
+                // float du_dx = 0.0f;
+                // float dv_dx = 0.0f;
+                // float du_dy = 0.0f;
+                // float dv_dy = 0.0f;
+                // compute_uv_der(du_dx, du_dy, dv_dx, dv_dy, verts, dl_dx, dl_dy, make3(bc_weights.x, bc_weights.y, bc_weights.z));
+                // float rho_x = sqrtf(du_dx * du_dx * tex->cop_w[0] * tex->cop_w[0] + dv_dx * dv_dx * tex->cop_h[0] * tex->cop_h[0]);
+                // float rho_y = sqrtf(du_dy * du_dy * tex->cop_w[0] * tex->cop_w[0] + dv_dy * dv_dy * tex->cop_h[0] * tex->cop_h[0]);
+
+                // float rho = fmaxf(rho_x, rho_y);
+                // float level = log2f(fmaxf(rho, 1.0f));
+
+                if (type == "mip") {
+                    pixel_shader_mip(&data[(y * w + x) * 3], level);
+                    continue;
+                }
+
+                vec3 tc;
+                vec3 add_tc;
+                if (level != floorf(level)) {
+                    vec3 tc1 = interpolate(tex->copies[(size_t)floorf(level)], tex->cop_w[(size_t)floorf(level)], tex->cop_h[(size_t)floorf(level)], make2(u, v), false);
+                    vec3 tc2 = interpolate(tex->copies[(size_t)floorf(level) + 1], tex->cop_w[(size_t)floorf(level) + 1], tex->cop_h[(size_t)floorf(level) + 1], make2(u, v), false);
+                    float k = 1 - (level - floorf(level));
+                    tc = make3(tc1.x * k + tc2.x * (1 - k), tc1.y * k + tc2.y * (1 - k), tc1.z * k + tc2.z * (1 - k));
+
+                    vec3 add_tc1 = interpolate(add_tex.copies[(size_t)floorf(level)], add_tex.cop_w[(size_t)floorf(level)], add_tex.cop_h[(size_t)floorf(level)], make2(u, v), false);
+                    vec3 add_tc2 = interpolate(add_tex.copies[(size_t)floorf(level) + 1], add_tex.cop_w[(size_t)floorf(level) + 1], add_tex.cop_h[(size_t)floorf(level) + 1], make2(u, v), false);
+                    k = 1 - (level - floorf(level));
+                    add_tc = make3(add_tc1.x * k + add_tc2.x * (1 - k), add_tc1.y * k + add_tc2.y * (1 - k), add_tc1.z * k + add_tc2.z * (1 - k));
+                } else {
+                    tc = interpolate(tex->copies[(size_t)level], tex->cop_w[(size_t)level], tex->cop_h[(size_t)level], make2(u, v), false);
+                    add_tc = interpolate(add_tex.copies[(size_t)level], add_tex.cop_w[(size_t)level], add_tex.cop_h[(size_t)level], make2(u, v), false);
+                }
+                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, add_tc, l, k_a, k_d);
             }
         }
     }

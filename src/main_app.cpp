@@ -171,13 +171,13 @@ int main(int argc, char **argv)
     int seed = 42;
     const int hm_weight = 512;
     const int hm_height = 512;
-    const float features = 5.0f;
+    const float features = 9.0f;
     const int octaves = 6;
     const int grid = 64;
     const int landscape_size = 50;
     const float cell = float(landscape_size) / float(grid);
     const float speed = 1.0f;
-    const float landscape_base_y = -2.5f;
+    const float landscape_base_y = -5.0f;
     const int period_landscape_tex = 3;
 
 
@@ -238,6 +238,7 @@ int main(int argc, char **argv)
     std::vector<texture> texs;
     texs.reserve(count);
     int count_texs{};
+    int max_mesh_size{};
     std::vector<object> objs;
     for (int i = 0; i < count; i++) {
         object obj;
@@ -253,10 +254,13 @@ int main(int argc, char **argv)
         if (obj.m == NULL) {
             meshs.emplace_back(load_obj(argv[8 + i * 2]));
             obj.m = &(meshs[count_meshs]);
+            if (obj.m->num_vertices > max_mesh_size) {
+                max_mesh_size = obj.m->num_vertices;
+            }
             count_meshs++;
 
             if (obj.m->num_triangles == 0) {
-                printf("Failed to load mesh: %s\n", obj_path);
+                printf("Failed to load mesh:");
                 for (int r = 0; r < count_meshs; r++) {
                     free_mesh(&meshs[r]);
                 }
@@ -302,9 +306,9 @@ int main(int argc, char **argv)
     const size_t n_pixels = (size_t)out_w * out_h;
     uint8_t *pixels = (uint8_t *)malloc(4 * n_pixels);
 
-    
-    std::vector<vec4> clip(meshs[0].num_vertices);
-    std::vector<vec3> normals(meshs[0].num_vertices);
+    max_mesh_size = landscape.m->num_vertices > max_mesh_size ? landscape.m->num_vertices : max_mesh_size;
+    std::vector<vec4> clip(max_mesh_size);
+    std::vector<vec3> normals(max_mesh_size);
     std::vector<vec3> base_normals(landscape.m->num_vertices);
 
     float max_crds[3] = {meshs[0].verts[0].x, meshs[0].verts[0].y, meshs[0].verts[0].z};

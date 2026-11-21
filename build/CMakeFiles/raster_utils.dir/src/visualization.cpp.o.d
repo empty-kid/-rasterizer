@@ -1,8 +1,8 @@
 CMakeFiles/raster_utils.dir/src/visualization.cpp.o: \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp \
  /usr/include/stdc-predef.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
  /usr/include/c++/13/cmath /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -153,10 +153,10 @@ CMakeFiles/raster_utils.dir/src/visualization.cpp.o: \
  /usr/include/c++/13/bits/uses_allocator.h \
  /usr/include/c++/13/bits/uses_allocator_args.h /usr/include/c++/13/tuple \
  /usr/include/c++/13/bits/ranges_util.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \

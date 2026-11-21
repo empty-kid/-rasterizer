@@ -1,5 +1,8 @@
 #include <visualization.h>
 
+constexpr vec3 k_a = {0.15, 0.15, 0.15};
+constexpr vec3 k_d = {1, 1, 1};
+
 template <typename V>
 int clip_near(const V (&in)[3], V (&out)[4])
 {
@@ -14,149 +17,6 @@ int clip_near(const V (&in)[3], V (&out)[4])
         out[n++] = lerp_vertex(in[i], in[(i + 1) % 3], da / (da - db));
     }
     return n;
-}
-
-void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
-{
-    int sz = objs.size();
-    for (int q = 0; q < sz; q++) {
-        clip.resize(objs[q].m->num_vertices);
-        normals.resize(objs[q].m->num_vertices);
-        mat4 M = objs[q].M;
-        std::string type = objs[q].type;
-        if ((type == "full" or type == "uv") && objs[q].m->tcs == NULL) {
-            type = "normals";
-        }
-        mat4 MVP  = mul(P, mul(V, M));
-        mat4 inv_M;
-        inverse(M, inv_M);
-
-        for (int i = 0; i < objs[q].m->num_vertices; i++) {
-            vec4 p = {objs[q].m->verts[i].x, objs[q].m->verts[i].y, objs[q].m->verts[i].z, 1.0f};
-            clip[i] = mul(MVP, p);
-            vec4 normal4 = mul(mul(V, transpose(inv_M)), make4(objs[q].m->normals[i].x, objs[q].m->normals[i].y, objs[q].m->normals[i].z, 0));
-            normals[i].x = normal4.x;
-            normals[i].y = normal4.y;
-            normals[i].z = normal4.z;
-        }
-
-        for (int t = 0; t < objs[q].m->num_triangles; t++) {
-            int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
-            VERT verts_before[3];
-            bool behind_screen{};
-            for (int j = 0; j < 3; j++) {
-                verts_before[j].coord = clip[idx[j]];
-                if (type == "full" or type == "uv") {
-                    verts_before[j].uv = objs[q].m->tcs[idx[j]];
-                } else {
-                    verts_before[j].uv = make2(verts_before[j].coord.x, verts_before[j].coord.y);
-                }
-                if (verts_before[j].coord.w <= 0.0f) {
-                    behind_screen = true;
-                    break;
-                }
-                verts_before[j].normals = normals[idx[j]];
-            }
-            if (behind_screen) {
-                continue;
-            }
-            VERT verts[4];
-            int n;
-            n = clip_near(verts_before, verts);
-            for (int j = 0; j < n; j++) {
-                verts[j].coord.x = ((verts[j].coord.x / verts[j].coord.w) / 2.0f + 0.5f) * W;
-                verts[j].coord.y = ((verts[j].coord.y / verts[j].coord.w) / 2.0f + 0.5f) * H;
-                verts[j].coord.z = verts[j].coord.z / verts[j].coord.w;
-                verts[j].uv.x = verts[j].uv.x / verts[j].coord.w;
-                verts[j].uv.y = verts[j].uv.y / verts[j].coord.w;
-                verts[j].coord.w = 1 / verts[j].coord.w;
-            }
-            if (n == 0) {
-                continue;
-            } else if (n == 3) {
-                VERT proc[3] = {verts[0], verts[1], verts[2]};
-                if (type != "full" && type != "mip") {
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), type, true);
-                } else {
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), objs[q].tex, type, true);
-                }
-            } else {
-                VERT proc[3] = {verts[0], verts[1], verts[2]};
-                if (type != "full" && type != "mip") {
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), type, true);
-                    proc[1] = verts[2];
-                    proc[2] = verts[3];
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), type, true);
-                } else {
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), objs[q].tex, type, true);
-                    proc[1] = verts[2];
-                    proc[2] = verts[3];
-                    rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), objs[q].tex, type, true);
-                }
-            } 
-        }
-    }
-}
-
-void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
-{
-    int sz = objs.size();
-    for (int q = 0; q < sz; q++) {
-        clip.resize(objs[q].m->num_vertices);
-        normals.resize(objs[q].m->num_vertices);
-        mat4 M = objs[q].M;
-        std::string type = objs[q].type;
-        mat4 MVP  = mul(P, mul(V, M));
-        mat4 inv_M;
-        inverse(M, inv_M);
-
-        for (int i = 0; i < objs[q].m->num_vertices; i++) {
-            vec4 p = {objs[q].m->verts[i].x, objs[q].m->verts[i].y, objs[q].m->verts[i].z, 1.0f};
-            clip[i] = mul(MVP, p);
-            vec4 normal4 = mul(mul(V, transpose(inv_M)), make4(objs[q].m->normals[i].x, objs[q].m->normals[i].y, objs[q].m->normals[i].z, 0));
-            normals[i].x = normal4.x;
-            normals[i].y = normal4.y;
-            normals[i].z = normal4.z;
-        }
-
-        for (int t = 0; t < objs[q].m->num_triangles; t++) {
-            int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
-            VERT verts_before[3];
-            for (int j = 0; j < 3; j++) {
-                verts_before[j].coord = clip[idx[j]];
-                if (type == "full" or type == "uv") {
-                    verts_before[j].uv = objs[q].m->tcs[idx[j]];
-                    verts_before[j].uv.y = verts_before[j].uv.y;
-                } else {
-                    verts_before[j].uv = make2(verts_before[j].coord.x, verts_before[j].coord.y);
-                }
-                verts_before[j].normals = normals[idx[j]];
-            }
-            VERT verts[4];
-            int n;
-            n = clip_near(verts_before, verts);
-            for (int j = 0; j < n; j++) {
-                verts[j].coord.x = ((verts[j].coord.x / verts[j].coord.w) / 2.0f + 0.5f) * W;
-                verts[j].coord.y = ((verts[j].coord.y / verts[j].coord.w) / 2.0f + 0.5f) * H;
-                verts[j].coord.z = verts[j].coord.z / verts[j].coord.w;
-                verts[j].uv.x = verts[j].uv.x / verts[j].coord.w;
-                verts[j].uv.y = verts[j].uv.y / verts[j].coord.w;
-                verts[j].coord.w = 1 / verts[j].coord.w;
-            }
-            if (n == 0) {
-                continue;
-            } else if (n == 3) {
-                VERT proc[3] = {verts[0], verts[1], verts[2]};
-                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
-            } else {
-                VERT proc[3] = {verts[0], verts[1], verts[2]};
-                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
-                proc[1] = verts[2];
-                proc[2] = verts[3];
-                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
-            }
-        }
-    }
 }
 
 float sample_height(const std::vector<float> &height_map, int w, int h, float u, float v)
@@ -191,35 +51,165 @@ static vec3 calculate_normal(const std::vector<float> &hm, int w, int h, float u
     float rh = sample_height(hm, w, h, u + d, v);
     float uh = sample_height(hm, w, h, u, v + d);
     float dh = sample_height(hm, w, h, u, v - d);
-    vec3 n = make3(-3.0f * (rh - lh) / (d * (float)landscape_size * 2.0f), 1.0f, -3.0f * (uh - dh) / (d * (float)landscape_size * 2.0f));
+    vec3 n = make3(-6.0f * (rh - lh) / (d * (float)landscape_size * 2.0f), 1.0f, -6.0f * (uh - dh) / (d * (float)landscape_size * 2.0f));
     normalize(n);
     return n;
 }
 
+void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, const mat4 &MVP, const mat4 &V, const mat4 &inv_M)
+{
+    for (int i = 0; i < m->num_vertices; i++) {
+        vec4 p = {m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0f};
+        clip[i] = mul(MVP, p);
+        vec4 normal4 = mul(mul(V, transpose(inv_M)), make4(m->normals[i].x, m->normals[i].y, m->normals[i].z, 0));
+        normals[i].x = normal4.x;
+        normals[i].y = normal4.y;
+        normals[i].z = normal4.z;
+    }
+}
+
+void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, std::vector<vec3> &base_normals, const mat4 &VP, const mat4 &M, const mat4 &V, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
+{
+    for (int i = 0; i < m->num_vertices; i++) {
+        vec4 p = {m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0f};
+        vec4 world_p = mul(M, p);
+        float ux = (world_p.x / landscape_size + 0.5f);
+        float vz = (world_p.z / landscape_size + 0.5f);
+        float h = sample_height(height_map, hm_weight, hm_height, ux, vz);
+        world_p.y = landscape_base_y + h * 6;
+        clip[i] = mul(VP, world_p);
+        float d = 0.5f / (float)landscape_size;
+        vec3 normal = calculate_normal(height_map, hm_weight, hm_height, ux, vz, d, landscape_size);
+        vec4 normal4 = mul(V, make4(normal.x, normal.y, normal.z, 0.0f));
+        normals[i] = make3(normal4.x, normal4.y, normal4.z);
+        base_normals[i] = normal;
+        m->tcs[i] = make2(ux * (float)period, vz * (float)period);
+    }
+}
+
+template <typename V>
+void ndc_to_pixels(V (&verts)[4], int n, int W, int H)
+{
+    for (int j = 0; j < n; j++) {
+        verts[j].coord.x = ((verts[j].coord.x / verts[j].coord.w) / 2.0f + 0.5f) * W;
+        verts[j].coord.y = ((verts[j].coord.y / verts[j].coord.w) / 2.0f + 0.5f) * H;
+        verts[j].coord.z = verts[j].coord.z / verts[j].coord.w;
+        verts[j].uv.x = verts[j].uv.x / verts[j].coord.w;
+        verts[j].uv.y = verts[j].uv.y / verts[j].coord.w;
+        verts[j].coord.w = 1 / verts[j].coord.w;
+    }
+}
+
+void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
+{
+    mat4 VP = mul(P, V);
+    int sz = objs.size();
+    for (int q = 0; q < sz; q++) {
+        mat4 M = objs[q].M;
+        std::string type = objs[q].type;
+        if ((type == "full" or type == "uv" or type == "mip") && objs[q].m->tcs == NULL) {
+            type = "normals";
+        }
+        mat4 MVP  = mul(VP, M);
+        mat4 inv_M;
+        inverse(M, inv_M);
+        verts_shader(clip, normals, objs[q].m, MVP, V, inv_M);
+        
+
+        for (int t = 0; t < objs[q].m->num_triangles; t++) {
+            int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
+            VERT verts_before[3];
+            bool behind_screen{};
+            for (int j = 0; j < 3; j++) {
+                verts_before[j].coord = clip[idx[j]];
+                if (type == "full" or type == "uv" or type == "mip") {
+                    verts_before[j].uv = objs[q].m->tcs[idx[j]];
+                }
+                if (verts_before[j].coord.w <= 0.0f) {
+                    behind_screen = true;
+                    break;
+                }
+                verts_before[j].normals = normals[idx[j]];
+            }
+            if (behind_screen) {
+                continue;
+            }
+
+            VERT verts[4];
+            int n = clip_near(verts_before, verts);
+            ndc_to_pixels(verts, n, W, H);
+
+            if (n == 0) {
+                continue;
+            } else if (n == 3) {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+            } else {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+                proc[1] = verts[2];
+                proc[2] = verts[3];
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+            } 
+        }
+    }
+}
+
+void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
+{
+    mat4 VP = mul(P, V);
+    int sz = objs.size();
+    for (int q = 0; q < sz; q++) {
+        mat4 M = objs[q].M;
+        std::string type = objs[q].type;
+        if ((type == "full" or type == "uv" or type == "mip") && objs[q].m->tcs == NULL) {
+            type = "normals";
+        }
+        mat4 MVP  = mul(VP, M);
+        mat4 inv_M;
+        inverse(M, inv_M);
+        verts_shader(clip, normals, objs[q].m, MVP, V, inv_M);
+
+        for (int t = 0; t < objs[q].m->num_triangles; t++) {
+            int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
+            VERT verts_before[3];
+            for (int j = 0; j < 3; j++) {
+                verts_before[j].coord = clip[idx[j]];
+                if (type == "full" or type == "uv" or type == "mip") {
+                    verts_before[j].uv = objs[q].m->tcs[idx[j]];
+                }
+                verts_before[j].normals = normals[idx[j]];
+            }
+            
+            VERT verts[4];
+            int n = clip_near(verts_before, verts);
+            ndc_to_pixels(verts, n, W, H);
+
+            if (n == 0) {
+                continue;
+            } else if (n == 3) {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
+            } else {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
+                proc[1] = verts[2];
+                proc[2] = verts[3];
+                rasterisation(fb.data(), sb.data(), W, H, proc, objs[q].tex, type);
+            }
+        }
+    }
+}
+
 void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &base_normals, const mat4 &V, const mat4 &P, const vec3 &l, object &landscape, const texture &additional_landscape_tex, int W, int H, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
 {
-    clip.resize(landscape.m->num_vertices);
-    normals.resize(landscape.m->num_vertices);
+    mat4 VP = mul(P, V);
     mat4 M = landscape.M;
     std::string type = landscape.type;
     mat4 inv_M;
     inverse(M, inv_M);
     
-    for (int i = 0; i < landscape.m->num_vertices; i++) {
-        vec4 p = {landscape.m->verts[i].x, landscape.m->verts[i].y, landscape.m->verts[i].z, 1.0f};
-        vec4 world_p = mul(M, p);
-        float ux = (world_p.x / landscape_size + 0.5f);
-        float vz = (world_p.z / landscape_size + 0.5f);
-        float h = sample_height(height_map, hm_weight, hm_height, ux, vz);
-        world_p.y = landscape_base_y + h * 3;
-        clip[i] = mul(P, mul(V, world_p));
-        float d = 1.0f / (float)landscape_size;
-        vec3 normal = calculate_normal(height_map, hm_weight, hm_height, ux, vz, d, landscape_size);
-        vec4 normal4 = mul(V, make4(normal.x, normal.y, normal.z, 0.0f));
-        normals[i] = make3(normal4.x, normal4.y, normal4.z);
-        base_normals[i] = normal;
-        landscape.m->tcs[i] = make2(ux * (float)period, vz * (float)period);
-    }
+    verts_shader(clip, normals, landscape.m, base_normals, VP, M, V, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period);
 
     for (int t = 0; t < landscape.m->num_triangles; t++) {
         int idx[3] = {landscape.m->indices[3*t + 0], landscape.m->indices[3*t + 1], landscape.m->indices[3*t + 2]};
@@ -233,25 +223,19 @@ void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector
         VERT_L verts[4];
         int n;
         n = clip_near(verts_before, verts);
-        for (int j = 0; j < n; j++) {
-            verts[j].coord.x = ((verts[j].coord.x / verts[j].coord.w) / 2.0f + 0.5f) * W;
-            verts[j].coord.y = ((verts[j].coord.y / verts[j].coord.w) / 2.0f + 0.5f) * H;
-            verts[j].coord.z = verts[j].coord.z / verts[j].coord.w;
-            verts[j].uv.x = verts[j].uv.x / verts[j].coord.w;
-            verts[j].uv.y = verts[j].uv.y / verts[j].coord.w;
-            verts[j].coord.w = 1 / verts[j].coord.w;
-        }
+        ndc_to_pixels(verts, n, W, H);
+
         if (n == 0) {
             continue;
         } else if (n == 3) {
             VERT_L proc[3] = {verts[0], verts[1], verts[2]};
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
         } else {
             VERT_L proc[3] = {verts[0], verts[1], verts[2]};
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
             proc[1] = verts[2];
             proc[2] = verts[3];
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, make3(0.15, 0.15, 0.15), make3(1, 1, 1), landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
         }
     }
 }

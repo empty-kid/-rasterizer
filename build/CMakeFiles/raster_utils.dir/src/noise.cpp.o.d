@@ -1,8 +1,8 @@
 CMakeFiles/raster_utils.dir/src/noise.cpp.o: \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp \
  /usr/include/stdc-predef.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
  /usr/include/c++/13/cmath /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \

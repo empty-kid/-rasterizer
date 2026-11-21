@@ -1,8 +1,8 @@
 CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp \
  /usr/include/stdc-predef.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
  /usr/include/c++/13/cmath /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -157,13 +157,13 @@ CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
@@ -177,7 +177,7 @@ CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: \
  /usr/include/c++/13/bits/ranges_algobase.h \
  /usr/include/c++/13/pstl/glue_algorithm_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/external/tinyobj_loader_c.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/external/tinyobj_loader_c.h \
  /usr/include/assert.h /usr/include/string.h /usr/include/strings.h \
  /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
  /usr/include/x86_64-linux-gnu/bits/string_fortified.h \

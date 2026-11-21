@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/c/users/pas19/Desktop/shchenok/cg/Raster
+CMAKE_SOURCE_DIR = /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build
+CMAKE_BINARY_DIR = /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/raster_utils.dir/depend.make
@@ -70,88 +70,88 @@ include CMakeFiles/raster_utils.dir/progress.make
 include CMakeFiles/raster_utils.dir/flags.make
 
 CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp
+CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp
 CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/raster_utils.dir/src/image_utils.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/image_utils.cpp.o -MF CMakeFiles/raster_utils.dir/src/image_utils.cpp.o.d -o CMakeFiles/raster_utils.dir/src/image_utils.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/raster_utils.dir/src/image_utils.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/image_utils.cpp.o -MF CMakeFiles/raster_utils.dir/src/image_utils.cpp.o.d -o CMakeFiles/raster_utils.dir/src/image_utils.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp
 
 CMakeFiles/raster_utils.dir/src/image_utils.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/image_utils.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp > CMakeFiles/raster_utils.dir/src/image_utils.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp > CMakeFiles/raster_utils.dir/src/image_utils.cpp.i
 
 CMakeFiles/raster_utils.dir/src/image_utils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/image_utils.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp -o CMakeFiles/raster_utils.dir/src/image_utils.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp -o CMakeFiles/raster_utils.dir/src/image_utils.cpp.s
 
 CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp
+CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp
 CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o -MF CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o.d -o CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o -MF CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o.d -o CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp
 
 CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp > CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp > CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.i
 
 CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp -o CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp -o CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.s
 
 CMakeFiles/raster_utils.dir/src/raster.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/raster.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp
+CMakeFiles/raster_utils.dir/src/raster.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp
 CMakeFiles/raster_utils.dir/src/raster.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/raster_utils.dir/src/raster.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/raster.cpp.o -MF CMakeFiles/raster_utils.dir/src/raster.cpp.o.d -o CMakeFiles/raster_utils.dir/src/raster.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/raster_utils.dir/src/raster.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/raster.cpp.o -MF CMakeFiles/raster_utils.dir/src/raster.cpp.o.d -o CMakeFiles/raster_utils.dir/src/raster.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp
 
 CMakeFiles/raster_utils.dir/src/raster.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/raster.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp > CMakeFiles/raster_utils.dir/src/raster.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp > CMakeFiles/raster_utils.dir/src/raster.cpp.i
 
 CMakeFiles/raster_utils.dir/src/raster.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/raster.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp -o CMakeFiles/raster_utils.dir/src/raster.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp -o CMakeFiles/raster_utils.dir/src/raster.cpp.s
 
 CMakeFiles/raster_utils.dir/src/noise.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/noise.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp
+CMakeFiles/raster_utils.dir/src/noise.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp
 CMakeFiles/raster_utils.dir/src/noise.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/raster_utils.dir/src/noise.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/noise.cpp.o -MF CMakeFiles/raster_utils.dir/src/noise.cpp.o.d -o CMakeFiles/raster_utils.dir/src/noise.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/raster_utils.dir/src/noise.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/noise.cpp.o -MF CMakeFiles/raster_utils.dir/src/noise.cpp.o.d -o CMakeFiles/raster_utils.dir/src/noise.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp
 
 CMakeFiles/raster_utils.dir/src/noise.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/noise.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp > CMakeFiles/raster_utils.dir/src/noise.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp > CMakeFiles/raster_utils.dir/src/noise.cpp.i
 
 CMakeFiles/raster_utils.dir/src/noise.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/noise.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp -o CMakeFiles/raster_utils.dir/src/noise.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp -o CMakeFiles/raster_utils.dir/src/noise.cpp.s
 
 CMakeFiles/raster_utils.dir/src/texturing.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/texturing.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp
+CMakeFiles/raster_utils.dir/src/texturing.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp
 CMakeFiles/raster_utils.dir/src/texturing.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/raster_utils.dir/src/texturing.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/texturing.cpp.o -MF CMakeFiles/raster_utils.dir/src/texturing.cpp.o.d -o CMakeFiles/raster_utils.dir/src/texturing.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/raster_utils.dir/src/texturing.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/texturing.cpp.o -MF CMakeFiles/raster_utils.dir/src/texturing.cpp.o.d -o CMakeFiles/raster_utils.dir/src/texturing.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp
 
 CMakeFiles/raster_utils.dir/src/texturing.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/texturing.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp > CMakeFiles/raster_utils.dir/src/texturing.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp > CMakeFiles/raster_utils.dir/src/texturing.cpp.i
 
 CMakeFiles/raster_utils.dir/src/texturing.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/texturing.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp -o CMakeFiles/raster_utils.dir/src/texturing.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp -o CMakeFiles/raster_utils.dir/src/texturing.cpp.s
 
 CMakeFiles/raster_utils.dir/src/visualization.cpp.o: CMakeFiles/raster_utils.dir/flags.make
-CMakeFiles/raster_utils.dir/src/visualization.cpp.o: /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp
+CMakeFiles/raster_utils.dir/src/visualization.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp
 CMakeFiles/raster_utils.dir/src/visualization.cpp.o: CMakeFiles/raster_utils.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/raster_utils.dir/src/visualization.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/visualization.cpp.o -MF CMakeFiles/raster_utils.dir/src/visualization.cpp.o.d -o CMakeFiles/raster_utils.dir/src/visualization.cpp.o -c /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/raster_utils.dir/src/visualization.cpp.o"
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/raster_utils.dir/src/visualization.cpp.o -MF CMakeFiles/raster_utils.dir/src/visualization.cpp.o.d -o CMakeFiles/raster_utils.dir/src/visualization.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp
 
 CMakeFiles/raster_utils.dir/src/visualization.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/raster_utils.dir/src/visualization.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp > CMakeFiles/raster_utils.dir/src/visualization.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp > CMakeFiles/raster_utils.dir/src/visualization.cpp.i
 
 CMakeFiles/raster_utils.dir/src/visualization.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/raster_utils.dir/src/visualization.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp -o CMakeFiles/raster_utils.dir/src/visualization.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp -o CMakeFiles/raster_utils.dir/src/visualization.cpp.s
 
 # Object files for target raster_utils
 raster_utils_OBJECTS = \
@@ -173,7 +173,7 @@ libraster_utils.a: CMakeFiles/raster_utils.dir/src/texturing.cpp.o
 libraster_utils.a: CMakeFiles/raster_utils.dir/src/visualization.cpp.o
 libraster_utils.a: CMakeFiles/raster_utils.dir/build.make
 libraster_utils.a: CMakeFiles/raster_utils.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX static library libraster_utils.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX static library libraster_utils.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/raster_utils.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/raster_utils.dir/link.txt --verbose=$(VERBOSE)
 
@@ -186,6 +186,6 @@ CMakeFiles/raster_utils.dir/clean:
 .PHONY : CMakeFiles/raster_utils.dir/clean
 
 CMakeFiles/raster_utils.dir/depend:
-	cd /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/c/users/pas19/Desktop/shchenok/cg/Raster /mnt/c/users/pas19/Desktop/shchenok/cg/Raster /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/raster_utils.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles/raster_utils.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/raster_utils.dir/depend
 

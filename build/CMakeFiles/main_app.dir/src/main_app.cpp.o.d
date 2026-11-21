@@ -1,5 +1,5 @@
 CMakeFiles/main_app.dir/src/main_app.cpp.o: \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp \
  /usr/include/stdc-predef.h /usr/include/GLFW/glfw3.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h /usr/include/stdint.h \
@@ -19,9 +19,9 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h /usr/include/GL/gl.h \
  /usr/include/GL/glext.h /usr/include/KHR/khrplatform.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
  /usr/include/c++/13/cmath /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -162,12 +162,12 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/texturing.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
  /usr/include/c++/13/stdlib.h /usr/include/c++/13/math.h \
  /usr/include/c++/13/iostream /usr/include/c++/13/ostream \
  /usr/include/c++/13/ios /usr/include/c++/13/exception \

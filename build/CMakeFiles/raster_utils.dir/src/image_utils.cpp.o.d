@@ -1,8 +1,8 @@
 CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.cpp \
  /usr/include/stdc-predef.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/external/stb_image.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/image_utils.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/external/stb_image.h \
  /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -131,4 +131,4 @@ CMakeFiles/raster_utils.dir/src/image_utils.cpp.o: \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/mmintrin.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/mm_malloc.h \
- /mnt/c/users/pas19/Desktop/shchenok/cg/Raster/external/stb_image_write.h
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/external/stb_image_write.h
