@@ -7,6 +7,7 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.h \
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
+  /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/smoothing.h \
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.h \
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
   /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h \
@@ -263,6 +264,7 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/single_threaded.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/omp.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
@@ -272,6 +274,8 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h:
 
+/usr/lib/gcc/x86_64-linux-gnu/13/include/omp.h:
+
 /usr/include/x86_64-linux-gnu/sys/types.h:
 
 /usr/include/x86_64-linux-gnu/sys/single_threaded.h:
@@ -279,6 +283,8 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 /usr/include/x86_64-linux-gnu/sys/cdefs.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
+
+/usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
 
 /usr/include/c++/13/pstl/pstl_config.h:
 
@@ -392,8 +398,6 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/include/GL/glext.h:
 
-/usr/include/c++/13/bits/locale_facets.tcc:
-
 /usr/include/c++/13/bits/refwrap.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
@@ -419,6 +423,12 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 /usr/include/c++/13/tr1/beta_function.tcc:
 
 /usr/include/c++/13/bits/ranges_algobase.h:
+
+/usr/include/c++/13/stdexcept:
+
+/usr/include/c++/13/compare:
+
+/usr/include/c++/13/system_error:
 
 /usr/include/c++/13/bits/locale_facets.h:
 
@@ -502,13 +512,13 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/include/errno.h:
 
+/usr/include/c++/13/bits/locale_facets.tcc:
+
 /usr/include/x86_64-linux-gnu/sys/select.h:
 
 /usr/include/c++/13/cwchar:
 
 /usr/include/c++/13/cwctype:
-
-/usr/include/features-time64.h:
 
 /usr/include/c++/13/bits/hash_bytes.h:
 
@@ -522,6 +532,14 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h:
 
+/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
+
+/usr/include/c++/13/bits/string_view.tcc:
+
+/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/smoothing.h:
+
+/usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h:
+
 /usr/include/c++/13/bits/move.h:
 
 /usr/include/c++/13/bits/cpp_type_traits.h:
@@ -534,6 +552,10 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/include/c++/13/bits/cxxabi_forced.h:
 
+/usr/include/c++/13/bits/cxxabi_init_exception.h:
+
+/usr/include/c++/13/typeinfo:
+
 /usr/include/c++/13/bits/localefwd.h:
 
 /usr/include/c++/13/bits/streambuf_iterator.h:
@@ -541,10 +563,6 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 /usr/include/GLFW/glfw3.h:
 
 /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
-
-/usr/include/c++/13/bits/cxxabi_init_exception.h:
-
-/usr/include/c++/13/typeinfo:
 
 /usr/include/c++/13/bits/exception_ptr.h:
 
@@ -576,15 +594,7 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/include/c++/13/bits/memoryfwd.h:
 
-/usr/include/c++/13/stdexcept:
-
-/usr/include/c++/13/compare:
-
-/usr/include/c++/13/system_error:
-
-/usr/include/c++/13/bits/string_view.tcc:
-
-/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
+/usr/include/features-time64.h:
 
 /usr/include/c++/13/initializer_list:
 
@@ -594,9 +604,9 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 
 /usr/include/c++/13/tr1/exp_integral.tcc:
 
-/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h:
-
 /usr/include/c++/13/bits/range_access.h:
+
+/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.h:
 
 /usr/include/c++/13/tr1/hypergeometric.tcc:
 
@@ -673,8 +683,6 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 /usr/include/c++/13/bits/stl_iterator.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h:
-
-/usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h:
 
 /usr/include/x86_64-linux-gnu/bits/byteswap.h:
 
@@ -795,5 +803,3 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/gthr-default.h:
-
-/usr/include/x86_64-linux-gnu/gnu/stubs-64.h:

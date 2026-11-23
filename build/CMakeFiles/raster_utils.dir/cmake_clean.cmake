@@ -7,6 +7,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/raster_utils.dir/src/noise.cpp.o.d"
   "CMakeFiles/raster_utils.dir/src/raster.cpp.o"
   "CMakeFiles/raster_utils.dir/src/raster.cpp.o.d"
+  "CMakeFiles/raster_utils.dir/src/smoothing.cpp.o"
+  "CMakeFiles/raster_utils.dir/src/smoothing.cpp.o.d"
   "CMakeFiles/raster_utils.dir/src/texturing.cpp.o"
   "CMakeFiles/raster_utils.dir/src/texturing.cpp.o.d"
   "CMakeFiles/raster_utils.dir/src/visualization.cpp.o"

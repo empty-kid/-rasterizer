@@ -54,6 +54,7 @@ typedef struct
     vec4 coord;
     vec2 uv;
     vec3 normals;
+    vec3 world;
 } VERT;
 
 typedef struct
@@ -62,6 +63,7 @@ typedef struct
     vec2 uv;
     vec3 normals;
     vec3 base_normals;
+    vec3 world;
 } VERT_L;
 
 template <int N>
@@ -230,6 +232,19 @@ static inline mat4 make_perspective(float angle, float a, float n, float f) {
     P.mat[3][2] = -1;
     P.mat[2][3] = 2 * f * n / (n - f);
     return P;
+}
+
+static inline mat4 make_orthographic(float l, float r, float b, float t, float n, float f)
+{
+    mat4 O;
+    O.mat[0][0] =  2.0f / (r - l);
+    O.mat[0][3] = -(r + l) / (r - l);
+    O.mat[1][1] =  2.0f / (t - b);
+    O.mat[1][3] = -(t + b) / (t - b);
+    O.mat[2][2] = -2.0f / (f - n);
+    O.mat[2][3] = -(f + n) / (f - n);
+    O.mat[3][3] = 1.0f;
+    return O;
 }
 
 #endif

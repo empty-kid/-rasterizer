@@ -77,8 +77,11 @@ cmake --build build -j --config Release
 ### main_app
 
 ```bash
-./build/main_app [width_scene] [height_scene] [width_proc] [height_proc] [scene_type] [out_path] [count] [obj] [tex]
+./build/main_app [width_scene] [height_scene] [width_proc] [height_proc] [scene_type] [out_path] [count] [obj] [tex] [shadow_size]
 ```
+
+Последний аргумент необязателен: разрешение карты теней (2048 по умолчанию).
+Карта строится один раз при запуске и сохраняется в `shadow_map.png`.
 
 Открывает окно (по умолчанию 640×480) и каждый кадр заполняет на CPU массив
 RGBA8 цветом, который плавно меняется со временем; массив выводится в окно

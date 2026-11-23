@@ -1,6 +1,7 @@
 CMakeFiles/raster_utils.dir/src/raster.cpp.o: \
  /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp \
  /usr/include/stdc-predef.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.h \
  /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.h \
  /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h \
  /usr/include/c++/13/cmath /usr/include/c++/13/bits/requires_hosted.h \
@@ -156,4 +157,6 @@ CMakeFiles/raster_utils.dir/src/raster.cpp.o: \
  /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
- /usr/include/c++/13/bits/vector.tcc
+ /usr/include/c++/13/bits/vector.tcc \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mat.h \
+ /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/vectors.h

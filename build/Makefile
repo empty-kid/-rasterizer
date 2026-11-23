@@ -262,6 +262,30 @@ src/raster.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/raster_utils.dir/build.make CMakeFiles/raster_utils.dir/src/raster.cpp.s
 .PHONY : src/raster.cpp.s
 
+src/smoothing.o: src/smoothing.cpp.o
+.PHONY : src/smoothing.o
+
+# target to build an object file
+src/smoothing.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raster_utils.dir/build.make CMakeFiles/raster_utils.dir/src/smoothing.cpp.o
+.PHONY : src/smoothing.cpp.o
+
+src/smoothing.i: src/smoothing.cpp.i
+.PHONY : src/smoothing.i
+
+# target to preprocess a source file
+src/smoothing.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raster_utils.dir/build.make CMakeFiles/raster_utils.dir/src/smoothing.cpp.i
+.PHONY : src/smoothing.cpp.i
+
+src/smoothing.s: src/smoothing.cpp.s
+.PHONY : src/smoothing.s
+
+# target to generate assembly for a file
+src/smoothing.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/raster_utils.dir/build.make CMakeFiles/raster_utils.dir/src/smoothing.cpp.s
+.PHONY : src/smoothing.cpp.s
+
 src/texturing.o: src/texturing.cpp.o
 .PHONY : src/texturing.o
 
@@ -335,6 +359,9 @@ help:
 	@echo "... src/raster.o"
 	@echo "... src/raster.i"
 	@echo "... src/raster.s"
+	@echo "... src/smoothing.o"
+	@echo "... src/smoothing.i"
+	@echo "... src/smoothing.s"
 	@echo "... src/texturing.o"
 	@echo "... src/texturing.i"
 	@echo "... src/texturing.s"

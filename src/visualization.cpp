@@ -56,11 +56,14 @@ static vec3 calculate_normal(const std::vector<float> &hm, int w, int h, float u
     return n;
 }
 
-void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, const mat4 &MVP, const mat4 &V, const mat4 &inv_M)
+void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &worlds, mesh *m, const mat4 &MVP, const mat4 &M, const mat4 &V, const mat4 &inv_M)
 {
+#pragma omp parallel for schedule(static)
     for (int i = 0; i < m->num_vertices; i++) {
         vec4 p = {m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0f};
+        vec4 world_p = mul(M, p);
         clip[i] = mul(MVP, p);
+        worlds[i] = make3(world_p.x, world_p.y, world_p.z);
         vec4 normal4 = mul(mul(V, transpose(inv_M)), make4(m->normals[i].x, m->normals[i].y, m->normals[i].z, 0));
         normals[i].x = normal4.x;
         normals[i].y = normal4.y;
@@ -68,8 +71,9 @@ void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, 
     }
 }
 
-void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, std::vector<vec3> &base_normals, const mat4 &VP, const mat4 &M, const mat4 &V, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
+void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &worlds, mesh *m, std::vector<vec3> &base_normals, const mat4 &VP, const mat4 &M, const mat4 &V, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
 {
+#pragma omp parallel for schedule(static)
     for (int i = 0; i < m->num_vertices; i++) {
         vec4 p = {m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0f};
         vec4 world_p = mul(M, p);
@@ -78,6 +82,7 @@ void verts_shader(std::vector<vec4> &clip, std::vector<vec3> &normals, mesh *m, 
         float h = sample_height(height_map, hm_weight, hm_height, ux, vz);
         world_p.y = landscape_base_y + h * 6;
         clip[i] = mul(VP, world_p);
+        worlds[i] = make3(world_p.x, world_p.y, world_p.z);
         float d = 0.5f / (float)landscape_size;
         vec3 normal = calculate_normal(height_map, hm_weight, hm_height, ux, vz, d, landscape_size);
         vec4 normal4 = mul(V, make4(normal.x, normal.y, normal.z, 0.0f));
@@ -100,7 +105,7 @@ void ndc_to_pixels(V (&verts)[4], int n, int W, int H)
     }
 }
 
-void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
+void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &worlds, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, const ShadowMap &shadow, int W, int H)
 {
     mat4 VP = mul(P, V);
     int sz = objs.size();
@@ -113,7 +118,7 @@ void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &cl
         mat4 MVP  = mul(VP, M);
         mat4 inv_M;
         inverse(M, inv_M);
-        verts_shader(clip, normals, objs[q].m, MVP, V, inv_M);
+        verts_shader(clip, normals, worlds, objs[q].m, MVP, M, V, inv_M);
         
 
         for (int t = 0; t < objs[q].m->num_triangles; t++) {
@@ -130,6 +135,7 @@ void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &cl
                     break;
                 }
                 verts_before[j].normals = normals[idx[j]];
+                verts_before[j].world = worlds[idx[j]];
             }
             if (behind_screen) {
                 continue;
@@ -143,19 +149,19 @@ void paint(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &cl
                 continue;
             } else if (n == 3) {
                 VERT proc[3] = {verts[0], verts[1], verts[2]};
-                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true, shadow);
             } else {
                 VERT proc[3] = {verts[0], verts[1], verts[2]};
-                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true, shadow);
                 proc[1] = verts[2];
                 proc[2] = verts[3];
-                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true);
+                rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, objs[q].tex, type, true, shadow);
             } 
         }
     }
 }
 
-void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, int W, int H)
+void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &worlds, const mat4 &V, const mat4 &P, const vec3 &l, std::vector<object> &objs, const ShadowMap &shadow, int W, int H)
 {
     mat4 VP = mul(P, V);
     int sz = objs.size();
@@ -168,7 +174,7 @@ void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vecto
         mat4 MVP  = mul(VP, M);
         mat4 inv_M;
         inverse(M, inv_M);
-        verts_shader(clip, normals, objs[q].m, MVP, V, inv_M);
+        verts_shader(clip, normals, worlds, objs[q].m, MVP, M, V, inv_M);
 
         for (int t = 0; t < objs[q].m->num_triangles; t++) {
             int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
@@ -179,6 +185,7 @@ void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vecto
                     verts_before[j].uv = objs[q].m->tcs[idx[j]];
                 }
                 verts_before[j].normals = normals[idx[j]];
+                verts_before[j].world = worlds[idx[j]];
             }
             
             VERT verts[4];
@@ -201,7 +208,7 @@ void paint_background(std::vector<float> &fb, std::vector<float> &sb, std::vecto
     }
 }
 
-void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &base_normals, const mat4 &V, const mat4 &P, const vec3 &l, object &landscape, const texture &additional_landscape_tex, int W, int H, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
+void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &base_normals, std::vector<vec3> &worlds, const mat4 &V, const mat4 &P, const vec3 &l, object &landscape, const texture &additional_landscape_tex, const ShadowMap &shadow, int W, int H, const std::vector<float> &height_map, int hm_weight, int hm_height, int landscape_size, float landscape_base_y, int period)
 {
     mat4 VP = mul(P, V);
     mat4 M = landscape.M;
@@ -209,7 +216,7 @@ void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector
     mat4 inv_M;
     inverse(M, inv_M);
     
-    verts_shader(clip, normals, landscape.m, base_normals, VP, M, V, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period);
+    verts_shader(clip, normals, worlds, landscape.m, base_normals, VP, M, V, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period);
 
     for (int t = 0; t < landscape.m->num_triangles; t++) {
         int idx[3] = {landscape.m->indices[3*t + 0], landscape.m->indices[3*t + 1], landscape.m->indices[3*t + 2]};
@@ -219,6 +226,7 @@ void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector
             verts_before[j].uv = landscape.m->tcs[idx[j]];
             verts_before[j].normals = normals[idx[j]];
             verts_before[j].base_normals = base_normals[idx[j]];
+            verts_before[j].world = worlds[idx[j]];
         }
         VERT_L verts[4];
         int n;
@@ -229,13 +237,13 @@ void paint_landscape(std::vector<float> &fb, std::vector<float> &sb, std::vector
             continue;
         } else if (n == 3) {
             VERT_L proc[3] = {verts[0], verts[1], verts[2]};
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true, shadow);
         } else {
             VERT_L proc[3] = {verts[0], verts[1], verts[2]};
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true, shadow);
             proc[1] = verts[2];
             proc[2] = verts[3];
-            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true);
+            rasterisation(fb.data(), sb.data(), W, H, proc, l, k_a, k_d, landscape.tex, additional_landscape_tex, type, true, shadow);
         }
     }
 }
@@ -245,6 +253,7 @@ void paint_background(std::vector<float> &fb, std::vector<float> &sb, const vec3
     mat4 VP = mul(P, V);
     mat4 inv_VP;
     inverse(VP, inv_VP);
+#pragma omp parallel for collapse(2) schedule(static)
     for (int j = 0; j < H; j++) {
         for (int i = 0; i < W; i++) {
             size_t idx = (size_t)j * W + i;
@@ -298,6 +307,56 @@ void paint_background(std::vector<float> &fb, std::vector<float> &sb, const vec3
             fb[idx * 3 + 0] = c.x;
             fb[idx * 3 + 1] = c.y;
             fb[idx * 3 + 2] = c.z;
+        }
+    }
+}
+
+void paint_shadow(ShadowMap &shadow, std::vector<vec4> &clip, std::vector<vec3> &normals, std::vector<vec3> &worlds, const mat4 &V, const mat4 &P, std::vector<object> &objs)
+{
+    mat4 VP = mul(P, V);
+    int sz = objs.size();
+    for (int q = 0; q < sz; q++) {
+        mat4 M = objs[q].M;
+        mat4 MVP  = mul(VP, M);
+        mat4 inv_M;
+        inverse(M, inv_M);
+        verts_shader(clip, normals, worlds, objs[q].m, MVP, M, V, inv_M);
+        
+
+        for (int t = 0; t < objs[q].m->num_triangles; t++) {
+            int idx[3] = {objs[q].m->indices[3*t + 0], objs[q].m->indices[3*t + 1], objs[q].m->indices[3*t + 2]};
+            VERT verts_before[3];
+            bool behind_screen{};
+            for (int j = 0; j < 3; j++) {
+                verts_before[j].coord = clip[idx[j]];
+                verts_before[j].uv = {0, 0};
+                if (verts_before[j].coord.w <= 0.0f) {
+                    behind_screen = true;
+                    break;
+                }
+                verts_before[j].normals = normals[idx[j]];
+                verts_before[j].world = worlds[idx[j]];
+            }
+            if (behind_screen) {
+                continue;
+            }
+
+            VERT verts[4];
+            int n = clip_near(verts_before, verts);
+            ndc_to_pixels(verts, n, shadow.size, shadow.size);
+
+            if (n == 0) {
+                continue;
+            } else if (n == 3) {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(shadow.data.data(), shadow.size, proc);
+            } else {
+                VERT proc[3] = {verts[0], verts[1], verts[2]};
+                rasterisation(shadow.data.data(), shadow.size, proc);
+                proc[1] = verts[2];
+                proc[2] = verts[3];
+                rasterisation(shadow.data.data(), shadow.size, proc);
+            } 
         }
     }
 }

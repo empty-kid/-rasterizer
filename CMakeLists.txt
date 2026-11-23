@@ -33,6 +33,7 @@ add_library(raster_utils STATIC
     src/noise.cpp
     src/texturing.cpp
     src/visualization.cpp
+    src/smoothing.cpp
 )
 
 target_include_directories(raster_utils PUBLIC src ${CMAKE_CURRENT_SOURCE_DIR})
@@ -41,8 +42,8 @@ if(NOT MSVC)
 endif()
 
 find_package(OpenMP)
-if(OpenMP_C_FOUND)
-    target_link_libraries(raster_utils PUBLIC OpenMP::OpenMP_C)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(raster_utils PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # --- консольная программа: меш + картинка -> PNG ---------------------------

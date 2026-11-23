@@ -1,4 +1,4 @@
-#include <mesh_utils.h>
+#include <raster.h>
 #include <vector>
 #include <cmath>
 
@@ -128,6 +128,45 @@ vec3 interpolate(const float* tex, int tw, int th, vec2 t, bool clamp)
     return c;
 }
 
+static float shadow_sample(const ShadowMap &shadow, int x, int y, float depth, float bias)
+{
+    if (x < 0 or x >= shadow.size or y < 0 or y >= shadow.size) {
+        return 1.0f;
+    }
+    float stored = shadow.data[(size_t)y * shadow.size + x];
+    return depth - bias > stored ? 0.0f : 1.0f;
+}
+
+static float shadow_factor(const ShadowMap &shadow, const vec3 &world, float nl)
+{
+    if (nl <= 0.0f or shadow.data.empty() or shadow.size <= 0) {
+        return 1.0f;
+    }
+    vec4 light_clip = mul(shadow.VP, make4(world.x, world.y, world.z, 1.0f));
+    if (light_clip.w <= 0.0f) {
+        return 1.0f;
+    }
+    float inv_w = 1.0f / light_clip.w;
+    float x = (light_clip.x * inv_w * 0.5f + 0.5f) * shadow.size;
+    float y = (light_clip.y * inv_w * 0.5f + 0.5f) * shadow.size;
+    float depth = light_clip.z * inv_w * 0.5f + 0.5f;
+    if (x < 0.0f or y < 0.0f or x > shadow.size or y > shadow.size or depth < 0.0f or depth > 1.0f) {
+        return 1.0f;
+    }
+
+    float bias = shadow.bias + shadow.slope * (1.0f - nl);
+    float fx = x - 0.5f;
+    float fy = y - 0.5f;
+    int x0 = (int)floorf(fx);
+    int y0 = (int)floorf(fy);
+    float ax = fx - x0;
+    float ay = fy - y0;
+    return shadow_sample(shadow, x0, y0, depth, bias) * (1 - ax) * (1 - ay)
+        + shadow_sample(shadow, x0 + 1, y0, depth, bias) * ax * (1 - ay)
+        + shadow_sample(shadow, x0, y0 + 1, depth, bias) * (1 - ax) * ay
+        + shadow_sample(shadow, x0 + 1, y0 + 1, depth, bias) * ax * ay;
+}
+
 template <typename V>
 void pixel_shader_normals(float *pixel, const V (&verts)[3], const vec3 &bc_weights)
 {
@@ -162,7 +201,7 @@ void pixel_shader_mip(float *pixel, float level)
 }
 
 template <typename V>
-void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d)
+void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d, const vec3 &world, const ShadowMap &shadow)
 {
     vec3 n;
     n.x = verts[0].normals.x * bc_weights.x + verts[1].normals.x * bc_weights.y + verts[2].normals.x * bc_weights.z;
@@ -170,13 +209,14 @@ void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights
     n.z = verts[0].normals.z * bc_weights.x + verts[1].normals.z * bc_weights.y + verts[2].normals.z * bc_weights.z;
     normalize(n);
     float nl = dot(n, l) > 0 ? dot(n, l) : 0;
-    pixel[0] = tc.x * (k_a.x + k_d.x * nl);
-    pixel[1] = tc.y * (k_a.y + k_d.y * nl);
-    pixel[2] = tc.z * (k_a.z + k_d.z * nl);
+    float sk = shadow_factor(shadow, world, nl);
+    pixel[0] = tc.x * (k_a.x + k_d.x * nl * sk);
+    pixel[1] = tc.y * (k_a.y + k_d.y * nl * sk);
+    pixel[2] = tc.z * (k_a.z + k_d.z * nl * sk);
 }
 
 template <typename V>
-void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &add_tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d)
+void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights, const vec3 &tc, const vec3 &add_tc, const vec3 &l, const vec3 &k_a, const vec3 &k_d, const vec3 &world, const ShadowMap &shadow)
 {
     vec3 n;
     n.x = verts[0].normals.x * bc_weights.x + verts[1].normals.x * bc_weights.y + verts[2].normals.x * bc_weights.z;
@@ -185,12 +225,13 @@ void pixel_shader_full(float *pixel, const V (&verts)[3], const vec3 &bc_weights
     normalize(n);
     float base_normal_y = verts[0].base_normals.y * bc_weights.x + verts[1].base_normals.y * bc_weights.y + verts[2].base_normals.y * bc_weights.z;
     float nl = dot(n, l) > 0 ? dot(n, l) : 0;
-    pixel[0] = tc.x * (k_a.x + k_d.x * nl) * base_normal_y + add_tc.x * (k_a.x + k_d.x * nl) * (1 - base_normal_y);
-    pixel[1] = tc.y * (k_a.y + k_d.y * nl) * base_normal_y + add_tc.y * (k_a.y + k_d.y * nl) * (1 - base_normal_y);
-    pixel[2] = tc.z * (k_a.z + k_d.z * nl) * base_normal_y + add_tc.z * (k_a.z + k_d.z * nl) * (1 - base_normal_y);
+    float sk = shadow_factor(shadow, world, nl);
+    pixel[0] = tc.x * (k_a.x + k_d.x * nl * sk) * base_normal_y + add_tc.x * (k_a.x + k_d.x * nl * sk) * (1 - base_normal_y);
+    pixel[1] = tc.y * (k_a.y + k_d.y * nl * sk) * base_normal_y + add_tc.y * (k_a.y + k_d.y * nl * sk) * (1 - base_normal_y);
+    pixel[2] = tc.z * (k_a.z + k_d.z * nl * sk) * base_normal_y + add_tc.z * (k_a.z + k_d.z * nl * sk) * (1 - base_normal_y);
 }
 
-void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const std::string &type, bool back_sides)
+void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const std::string &type, bool back_sides, const ShadowMap &shadow)
 {
     float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
@@ -310,7 +351,11 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
                 } else {
                     tc = interpolate(tex->copies[(size_t)level], tex->cop_w[(size_t)level], tex->cop_h[(size_t)level], make2(u, v), false);
                 }
-                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, l, k_a, k_d); 
+                vec3 world;
+                world.x = verts[0].world.x * bc_weights.x + verts[1].world.x * bc_weights.y + verts[2].world.x * bc_weights.z;
+                world.y = verts[0].world.y * bc_weights.x + verts[1].world.y * bc_weights.y + verts[2].world.y * bc_weights.z;
+                world.z = verts[0].world.z * bc_weights.x + verts[1].world.z * bc_weights.y + verts[2].world.z * bc_weights.z;
+                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, l, k_a, k_d, world, shadow);
             }
         }
     }
@@ -388,7 +433,7 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT (&verts)[
     }
 }
 
-void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const texture &add_tex, const std::string &type, bool back_sides)
+void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts)[3], const vec3 &l, const vec3 &k_a, const vec3 &k_d, const texture *tex, const texture &add_tex, const std::string &type, bool back_sides, const ShadowMap &shadow)
 {
     float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
     if (fabs(s) < 1e-6f or (back_sides && s < 0)) {
@@ -507,7 +552,59 @@ void rasterisation(float *data, float *z_buf, int w, int h, const VERT_L (&verts
                     tc = interpolate(tex->copies[(size_t)level], tex->cop_w[(size_t)level], tex->cop_h[(size_t)level], make2(u, v), false);
                     add_tc = interpolate(add_tex.copies[(size_t)level], add_tex.cop_w[(size_t)level], add_tex.cop_h[(size_t)level], make2(u, v), false);
                 }
-                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, add_tc, l, k_a, k_d);
+                vec3 world;
+                world.x = verts[0].world.x * bc_weights.x + verts[1].world.x * bc_weights.y + verts[2].world.x * bc_weights.z;
+                world.y = verts[0].world.y * bc_weights.x + verts[1].world.y * bc_weights.y + verts[2].world.y * bc_weights.z;
+                world.z = verts[0].world.z * bc_weights.x + verts[1].world.z * bc_weights.y + verts[2].world.z * bc_weights.z;
+                pixel_shader_full(&data[(y * w + x) * 3], verts, bc_weights, tc, add_tc, l, k_a, k_d, world, shadow);
+            }
+        }
+    }
+}
+
+void rasterisation(float *data, int shadow_size, const VERT (&verts)[3]) {
+    float s = cross_p(verts[2].coord, verts[0].coord, verts[1].coord);
+    if (fabs(s) < 1e-6f or s < 0) {
+        return;
+    }
+    int x_max = (int)max(verts[0].coord.x, max(verts[1].coord.x, verts[2].coord.x));
+    int y_max = (int)max(verts[0].coord.y, max(verts[1].coord.y, verts[2].coord.y));
+    int x_min = (int)min(verts[0].coord.x, min(verts[1].coord.x, verts[2].coord.x));
+    int y_min = (int)min(verts[0].coord.y, min(verts[1].coord.y, verts[2].coord.y));
+    x_max = x_max < shadow_size ? x_max : shadow_size - 1;
+    y_max = y_max < shadow_size ? y_max : shadow_size - 1;
+    x_min = x_min > 0 ? x_min : 0;
+    y_min = y_min > 0 ? y_min : 0;
+    float dy3 = (verts[1].coord.x - verts[0].coord.x) / s;
+    float dx3 = -(verts[1].coord.y - verts[0].coord.y) / s;
+    float dy1 = (verts[2].coord.x - verts[1].coord.x) / s;
+    float dx1 = -(verts[2].coord.y - verts[1].coord.y) / s;
+    float dy2 = (verts[0].coord.x - verts[2].coord.x) / s;
+    float dx2 = -(verts[0].coord.y - verts[2].coord.y) / s;
+    vec3 dx = {dx1, dx2, dx3};
+    vec3 dy = {dy1, dy2, dy3};
+    vec3 e = find_coef((float)x_min + 0.5, (float)y_min + 0.5, verts, s);
+    vec3 row_weights = e;
+    for (int y = y_min; y <= y_max; y++) {
+        if (y > y_min) {
+            for (int k = 0; k < 3; ++k)
+                row_weights.M[k] += dy.M[k];
+        }
+        vec3 bc_weights = row_weights;
+        for (int x = x_min; x <= x_max; x++) {
+            if (x > x_min) {
+            for (int k = 0; k < 3; ++k)
+                bc_weights.M[k] += dx.M[k];
+            }
+            if ((bc_weights.z >= 0 && bc_weights.x >= 0 && bc_weights.y >= 0) || (bc_weights.z <= 0 && bc_weights.x <= 0 && bc_weights.y <= 0)) {
+                float z = verts[0].coord.z * bc_weights.x + verts[1].coord.z * bc_weights.y + verts[2].coord.z * bc_weights.z;
+                z = z < -1.0f ? -1.0f : (z > 1.0f ? 1.0f : z);
+                float depth = 0.5f * (z + 1.0f);
+                if (depth > data[y * shadow_size + x]) {
+                    continue;
+                } else {
+                    data[y * shadow_size + x] = depth;
+                }
             }
         }
     }

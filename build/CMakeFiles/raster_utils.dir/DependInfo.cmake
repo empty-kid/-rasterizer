@@ -12,6 +12,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/mesh_utils.cpp" "CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/mesh_utils.cpp.o.d"
   "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/noise.cpp" "CMakeFiles/raster_utils.dir/src/noise.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/noise.cpp.o.d"
   "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/raster.cpp" "CMakeFiles/raster_utils.dir/src/raster.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/raster.cpp.o.d"
+  "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/smoothing.cpp" "CMakeFiles/raster_utils.dir/src/smoothing.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/smoothing.cpp.o.d"
   "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/texturing.cpp" "CMakeFiles/raster_utils.dir/src/texturing.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/texturing.cpp.o.d"
   "/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/visualization.cpp" "CMakeFiles/raster_utils.dir/src/visualization.cpp.o" "gcc" "CMakeFiles/raster_utils.dir/src/visualization.cpp.o.d"
   )

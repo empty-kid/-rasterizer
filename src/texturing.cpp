@@ -11,6 +11,7 @@ void create_texture(texture &tex, const char* tex_path)
         int nh = (h + 1) / 2;
         float *copy = (float *)malloc(sizeof(float) * (size_t)nw * nh * 3);
         float *prev = tex.copies.back();
+#pragma omp parallel for collapse(2) schedule(static)
         for (int y = 0; y < nh; y++) {
             for (int x = 0; x < nw; x++) {
                 for (int c = 0; c < 3; c++) {

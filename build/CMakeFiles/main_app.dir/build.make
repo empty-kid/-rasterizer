@@ -73,15 +73,15 @@ CMakeFiles/main_app.dir/src/main_app.cpp.o: CMakeFiles/main_app.dir/flags.make
 CMakeFiles/main_app.dir/src/main_app.cpp.o: /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp
 CMakeFiles/main_app.dir/src/main_app.cpp.o: CMakeFiles/main_app.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main_app.dir/src/main_app.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main_app.dir/src/main_app.cpp.o -MF CMakeFiles/main_app.dir/src/main_app.cpp.o.d -o CMakeFiles/main_app.dir/src/main_app.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/main_app.dir/src/main_app.cpp.o -MF CMakeFiles/main_app.dir/src/main_app.cpp.o.d -o CMakeFiles/main_app.dir/src/main_app.cpp.o -c /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp
 
 CMakeFiles/main_app.dir/src/main_app.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/main_app.dir/src/main_app.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp > CMakeFiles/main_app.dir/src/main_app.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp > CMakeFiles/main_app.dir/src/main_app.cpp.i
 
 CMakeFiles/main_app.dir/src/main_app.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/main_app.dir/src/main_app.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp -o CMakeFiles/main_app.dir/src/main_app.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/c/Users/pas19/Desktop/shchenok/cg/Raster/src/main_app.cpp -o CMakeFiles/main_app.dir/src/main_app.cpp.s
 
 # Object files for target main_app
 main_app_OBJECTS = \
@@ -94,6 +94,8 @@ main_app: CMakeFiles/main_app.dir/src/main_app.cpp.o
 main_app: CMakeFiles/main_app.dir/build.make
 main_app: libraster_utils.a
 main_app: /usr/lib/x86_64-linux-gnu/libglfw.so.3.3
+main_app: /usr/lib/gcc/x86_64-linux-gnu/13/libgomp.so
+main_app: /usr/lib/x86_64-linux-gnu/libpthread.a
 main_app: /usr/lib/x86_64-linux-gnu/libGLX.so
 main_app: /usr/lib/x86_64-linux-gnu/libOpenGL.so
 main_app: CMakeFiles/main_app.dir/link.txt

@@ -11,8 +11,9 @@
 #include "mat.h"
 #include "raster.h"
 #include "texturing.h"
-#include <visualization.h>
-#include <noise.h>
+#include "visualization.h"
+#include "noise.h"
+#include "smoothing.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -23,6 +24,9 @@
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 const float SENSIVITY = 0.05f;
 float last_x{};
@@ -35,6 +39,8 @@ bool right_mouse_down{};
 bool mouse_look{};
 std::string TYPE = "full";
 std::string CAM_TYPE = "base";
+std::string FXAA = "off";
+std::string FXAA_INTER = "off";
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -60,6 +66,12 @@ static void key_callback(GLFWwindow *window, int key, int scancode, int action, 
         CAM_TYPE = "height";
     } else if (key == GLFW_KEY_7) {
         CAM_TYPE = "base";
+    } else if (key == GLFW_KEY_8 && action == GLFW_PRESS) {
+        FXAA = (FXAA == "on") ? "off" : "on";
+        if (FXAA == "on") FXAA_INTER = "off";
+    } else if (key == GLFW_KEY_9 && action == GLFW_PRESS) {
+        FXAA_INTER = (FXAA_INTER == "on") ? "off" : "on";
+        if (FXAA_INTER == "on") FXAA = "off";
     }
 }
 
@@ -131,6 +143,7 @@ static void write_rgb(uint8_t *pixels, float r, float g, float b)
 
 static void upscale_nearest(const std::vector<float> &src, uint8_t *dst, int src_w, int src_h, int dst_w, int dst_h)
 {
+#pragma omp parallel for schedule(static)
     for (int y = 0; y < dst_h; y++) {
         int src_y = (int)((y + 0.5f) * src_h / dst_h);
         if (src_y >= src_h) src_y = src_h - 1;
@@ -146,6 +159,7 @@ static void upscale_nearest(const std::vector<float> &src, uint8_t *dst, int src
 
 static void upscale_bilinear(const std::vector<float> &src, uint8_t *dst, int src_w, int src_h, int dst_w, int dst_h)
 {
+#pragma omp parallel for schedule(static)
     for (int y = 0; y < dst_h; y++) {
         float v = (y + 0.5f) / dst_h;
         for (int x = 0; x < dst_w; x++) {
@@ -159,6 +173,9 @@ static void upscale_bilinear(const std::vector<float> &src, uint8_t *dst, int sr
 
 int main(int argc, char **argv)
 {
+#ifdef _OPENMP
+    omp_set_num_threads(std::min(omp_get_max_threads(), 8));
+#endif
     const int width = argc > 1 ? atoi(argv[1]) : 640;
     const int height = argc > 2 ? atoi(argv[2]) : 480;
     int W = argc > 3 ? atoi(argv[3]) : 640;
@@ -169,6 +186,7 @@ int main(int argc, char **argv)
     // const char *obj_path = argc > 8 ? argv[8] : "resources/Bunny.obj";
     // const char *tex_path = argc > 9 ? argv[9] : "resources/textures/porcelain.jpg";
     int seed = 42;
+    const int shadow_size = argc > 8 + count * 2 ? atoi(argv[8 + count * 2]) : 2048;
     const int hm_weight = 512;
     const int hm_height = 512;
     const float features = 9.0f;
@@ -182,6 +200,8 @@ int main(int argc, char **argv)
 
 
     std::vector<float> fb((size_t)W * H * 3, 0.0f);
+    std::vector<float> tb((size_t)W * H * 3, 0.0f);
+    std::vector<float> lb((size_t)W * H, 0.0f);
     std::vector<float> sb((size_t)W * H, 1.0f);
     vec3 eye = make3(0, 0, 2);
     mat4 V;
@@ -195,6 +215,7 @@ int main(int argc, char **argv)
     std::vector<float> height_map((size_t)hm_weight * hm_height);
     Perlin2d noise(seed);
 
+#pragma omp parallel for collapse(2) schedule(static)
     for (int y = 0; y < hm_height; y++) {
         for (int x = 0; x < hm_weight; x++) {
             float u = ((float)x + 0.5f) / (float)hm_weight * features;
@@ -309,6 +330,7 @@ int main(int argc, char **argv)
     max_mesh_size = landscape.m->num_vertices > max_mesh_size ? landscape.m->num_vertices : max_mesh_size;
     std::vector<vec4> clip(max_mesh_size);
     std::vector<vec3> normals(max_mesh_size);
+    std::vector<vec3> worlds(max_mesh_size);
     std::vector<vec3> base_normals(landscape.m->num_vertices);
 
     float max_crds[3] = {meshs[0].verts[0].x, meshs[0].verts[0].y, meshs[0].verts[0].z};
@@ -340,6 +362,20 @@ int main(int argc, char **argv)
         }
     }
 
+    const float light_extent = 8.0f;
+    const float light_far = 200.0f;
+    vec3 light_pos = make3(start_light.x * 100.0f, start_light.y * 100.0f, start_light.z * 100.0f);
+    mat4 V_light = make_look_at(light_pos, make3(0, 0, 0), make3(0, 1, 0));
+    mat4 P_light = make_orthographic(-light_extent, light_extent, -light_extent, light_extent, 0.1f, light_far);
+    ShadowMap shadow;
+    shadow.size = shadow_size;
+    shadow.data.assign((size_t)shadow.size * shadow.size, 1.0f);
+    shadow.VP = mul(P_light, V_light);
+    float texel_world = 2.0f * light_extent / (float)shadow.size;
+    shadow.bias = 1.5f * texel_world / light_far;
+    shadow.slope = 2.0f * texel_world / light_far;
+    paint_shadow(shadow, clip, normals, worlds, V_light, P_light, objs);
+    save_image_f32_png_gray(shadow.data.data(), "shadow_map.png", shadow.size, shadow.size, 1.0f);
     double prev_time = glfwGetTime();
     double report_time = prev_time;
     int report_frames = 0;
@@ -393,7 +429,7 @@ int main(int argc, char **argv)
             float u = eye.x / landscape_size + 0.5f;
             float v = eye.z / landscape_size + 0.5f;
             float height = sample_height(height_map, hm_weight, hm_height, u, v);
-            eye.y = landscape_base_y + height * 3 + 0.5f;
+            eye.y = landscape_base_y + height * 6 + 0.5f;
         }
         vec3 target = make3(eye.x + forward.x, eye.y + forward.y, eye.z + forward.z);
         for (object &b : background) {
@@ -412,12 +448,12 @@ int main(int argc, char **argv)
         std::fill(fb.begin(), fb.end(), 0.0f);
         std::fill(sb.begin(), sb.end(), 1.0f);
 
-        paint(fb, sb, clip, normals, V, P, l, objs, W, H);
-        paint_landscape(fb, sb, clip, normals, base_normals, V, P, l, landscape, additional_landscape_tex, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period_landscape_tex);
+        paint(fb, sb, clip, normals, worlds, V, P, l, objs, shadow, W, H);
+        paint_landscape(fb, sb, clip, normals, base_normals, worlds, V, P, l, landscape, additional_landscape_tex, shadow, W, H, height_map, hm_weight, hm_height, landscape_size, landscape_base_y, period_landscape_tex);
 
         if (TYPE != "depth"){
             if (TYPE != "full") {
-            paint_background(fb, sb, clip, normals, V, P, l, background, W, H);
+                paint_background(fb, sb, clip, normals, worlds, V, P, l, background, shadow, W, H);
             } else {
                 paint_background(fb, sb, eye, V, P, background, W, H);
             }
@@ -426,12 +462,14 @@ int main(int argc, char **argv)
         if (TYPE == "depth") {
             float zmin = 1.0f;
             float zmax = -1.0f;
+#pragma omp parallel for reduction(min:zmin) reduction(max:zmax) schedule(static)
             for (int i = 0; i < W * H; i++) {
                 if (sb[i] < 1.0f) {
                     zmin = sb[i] < zmin ? sb[i] : zmin;
                     zmax = sb[i] > zmax ? sb[i] : zmax;
                 }
             }
+#pragma omp parallel for schedule(static)
             for (int i = 0; i < W * H; i++) {
                 float z;
                 if (zmax != zmin) {
@@ -445,13 +483,21 @@ int main(int argc, char **argv)
             }
         }
 
+        const std::vector<float> *src = &fb;
+        if (FXAA_INTER == "on" or FXAA == "on") {
+            std::copy(fb.begin(), fb.end(), tb.begin());
+            if (FXAA_INTER == "on") fxaa_inter(fb, tb, lb, W, H);
+            else fxaa(fb, tb, W, H);
+            src = &tb;
+        }
+
         if (out_w % W == 0 && out_h % H == 0) {
             int kx = out_w / W;
             int ky = out_h / H;
 
             for (int src_y = 0; src_y < H; src_y++) {
                 for (int src_x = 0; src_x < W; src_x++) {
-                    float *c = &fb[((size_t)src_y * W + src_x) * 3];
+                    const float *c = &(*src)[((size_t)src_y * W + src_x) * 3];
                     for (int y = 0; y < ky; y++) {
                         int dst_y = src_y * ky + y;
                         for (int x = 0; x < kx; x++) {
@@ -463,13 +509,12 @@ int main(int argc, char **argv)
                 }
             }
         } else if (out_w != W or out_h != H) {
-            upscale_nearest(fb, pixels, W, H, out_w, out_h);
+            upscale_nearest(*src, pixels, W, H, out_w, out_h);
         }
         // } else if (out_w != W or out_h != H) {
         //     upscale_bilinear(fb, pixels, W, H, out_w, out_h);
         // }
         
-
         glDrawPixels(out_w, out_h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         glfwSwapBuffers(window);
 
